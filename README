@@ -1,7 +1,8 @@
 Grade 12 Game
 
 Instructions:
-Install arcade and numpy.
+Install python 3.13.4 from: https://www.python.org/downloads/release/python-3134/
+Install python packages: arcade 3.2.0 and numpy 2.3.0rc1
 
 Credits:
 Ryan Butcher
