@@ -1,0 +1,38 @@
+WINDOW_WIDTH = 1350
+WINDOW_HEIGHT = 756
+WINDOW_TITLE = "PLACEHOLDER"
+PLAYER_MOVEMENT_SPEED = 10
+HOOK_MOVEMENT_SPEED = 5
+GRAVITY = 2
+TICK_RATE = 60
+
+FISHING_MINIGAME_X = 135
+FISHING_MINIGAME_Y = 450
+FISH_LIST = ("Rainbow Trout", "Dumbo Octopus", "Cod",
+             "Ancient Mariner's Albatross", "Bluefin Tuna",
+             "Immortal Jellyfish", "Snoek", "Marlin", "Northern Pike",
+             "Sockeye Salmon", "Naval Bomb")
+DIFFICULTY_1_LOW = 1
+DIFFICULTY_1_HIGH = 4
+
+DIFFICULTY_2_HIGH = 5
+DIFFICULTY_3_HIGH = 8
+
+DIFFICULTY_4_LOW = 2
+DIFFICULTY_4_HIGH = 8
+
+DIFFICULTY_5_LOW = 4
+DIFFICULTY_5_HIGH = 10
+
+DIFFICULTY_6_LOW = 6
+DIFFICULTY_7_LOW = 8
+
+DIFFICULTY_8_HIGH = 12
+DIFFICULTY_9_HIGH = 14
+
+DIFFICULTY_10 = 15
+
+
+# 150 x 84
+# 16:9
+# 1350 x 7565
