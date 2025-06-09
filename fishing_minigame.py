@@ -107,6 +107,8 @@ class FishingMiniGame(arcade.Window):
         self.current_difficulty_high = None
         self.init_animate = True
         self.animate_fish = None
+        self.current_column = None
+        self.current_count = None
 
     def setup(self):
         """Set up the game here. Call this function to restart the game."""
@@ -127,30 +129,41 @@ class FishingMiniGame(arcade.Window):
             self.fishing_sprite_list.draw(pixelated=True)
             self.current_fish_list.draw(pixelated=True)
 
+    def choose_new_fish(self):
+        current_fish = random.choices(FISH_LIST, weights=[0.20, 0.20, 0.15, 0.15, 0.05, 0.05,
+                                                          0.025, 0.025, 0.02, 0.02, 0.11], k=1)[0]
+        print("Fish Caught:", current_fish)
+        print("Worth:", fish_data[current_fish][0], "$")
+        print("Lower-Bound Diff:", fish_data[current_fish][1])
+        print("Upper-Bound Diff:", fish_data[current_fish][2])
+        print("Time Limit:", fish_data[current_fish][3])
+        print("Sprite Name:", fish_data[current_fish][4])
+        self.current_value = fish_data[current_fish][0]
+        self.current_difficulty_low = fish_data[current_fish][1]
+        self.current_difficulty_high = fish_data[current_fish][2]
+        self.current_time_limit = fish_data[current_fish][3]
+        self.current_sprite = fish_data[current_fish][4]
+        self.current_column = fish_data[current_fish][5]
+        self.current_count = fish_data[current_fish][6]
+        self.choose_fish = False
+
+        return (self.current_value,
+                self.current_difficulty_low,
+                self.current_difficulty_high,
+                self.current_time_limit,
+                self.current_sprite)
+
     def on_update(self, delta_time):
 
         if self.fishing_minigame_activate is True:
             if self.choose_fish is True:
-                current_fish = random.choices(FISH_LIST, weights=[0.20, 0.20, 0.15, 0.15, 0.05, 0.05,
-                                                                  0.025, 0.025, 0.02, 0.02, 0.11], k=1)[0]
-                print("Fish Caught:", current_fish)
-                print("Worth:", fish_data[current_fish][0], "$")
-                print("Lower-Bound Diff:", fish_data[current_fish][1])
-                print("Upper-Bound Diff:", fish_data[current_fish][2])
-                print("Time Limit:", fish_data[current_fish][3])
-                print("Sprite Name:", fish_data[current_fish][4])
-                self.current_value = fish_data[current_fish][0]
-                self.current_difficulty_low = fish_data[current_fish][1]
-                self.current_difficulty_high = fish_data[current_fish][2]
-                self.current_time_limit = fish_data[current_fish][3]
-                self.current_sprite = fish_data[current_fish][4]
-                self.choose_fish = False
+                self.choose_new_fish()
 
                 if self.init_animate is True:
                     self.current_fish_texture = arcade.load_spritesheet(self.current_sprite)
                     texture_list = self.current_fish_texture.get_texture_grid(size=(1350, 756),
-                                                                              columns=fish_data[current_fish][5],
-                                                                              count=fish_data[current_fish][6])
+                                                                              columns=self.current_column,
+                                                                              count=self.current_count)
                     frames = []
                     for tex in texture_list:
                         frames.append(arcade.TextureKeyframe(tex))
