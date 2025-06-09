@@ -80,6 +80,7 @@ class GameView(arcade.View):
         self.current_fish = fish_data[current_fish][4]
         self.current_fish_texture = arcade.load_texture(self.current_fish)
         self.current_fish_sprite = arcade.Sprite(self.current_fish_texture)
+        self.current_fish_sprite.position = self.bob_sprite.center_x, 200
 
         self.physics_engine = arcade.PhysicsEnginePlatformer(self.current_fish_sprite, None, GRAVITY-1, None,
                                                              self.player_list)
@@ -125,10 +126,11 @@ class GameView(arcade.View):
         # Every 5 minutes or 18000 ticks trigger a new day with the trigger mob function
         if self.timer % 400 == 0:
             self.trigger_mob()
-        # If you miss a fish, this will allow a label to be drawn for only 2 seconds
+        # If you miss a fish, this will allow a label to be drawn for only 1 second
         if self.show_missed_label:
             self.missed_ticks += 1
-            if self.missed_ticks == 120:
+            if self.missed_ticks == 60:
+                self.missed_ticks = 0
                 self.show_missed_label = False
         # Shows a quota at the start of a new day for 4 seconds
         if self.show_quota_label:
@@ -163,7 +165,6 @@ class GameView(arcade.View):
                 self.button_appear = False
                 self.show_missed_label = True
                 self.fish_is_ready = False
-                print(self.main_loop)
                 self.main_loop = True
 
     def on_key_press(self, key, modifiers):
@@ -183,7 +184,7 @@ class GameView(arcade.View):
         dx = x - self.buttonX
         dy = y - self.buttonY
         distance_squared = dx**2 + dy**2
-        if button == arcade.key.LEFT:
+        if button == arcade.MOUSE_BUTTON_LEFT:
             if self.main_loop:
                 self.main_loop = False
                 self.is_fishing = True
@@ -209,7 +210,6 @@ class GameView(arcade.View):
                     self.button_message.x, self.button_message.y = self.buttonX, self.buttonY
                     self.fish_ticks = 0
                     self.button_appear = False
-
 
     def trigger_mob(self):
         # Every new day the quota goes up by 10$ and the counter increases while the timer resets
