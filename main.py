@@ -14,24 +14,14 @@ class GameView(arcade.View):
         super().__init__()
         # Loads the texture to become sprites of the bob, and the background
         self.bob_texture = arcade.load_texture("assets/bobber.png")
-        self.bob_sprite = arcade.Sprite(self.bob_texture, 0.75)
+        self.bob_sprite = arcade.Sprite(self.bob_texture, 0.70)
         self.background_texture = arcade.load_texture("assets/background.png")
         self.background_sprite = arcade.Sprite(self.background_texture)
 
+        self.player_list = arcade.SpriteList()
+        self.player_texture = None
+        self.player_animation = None
         self.is_animate = False
-
-
-        if self.is_animate:
-            self.player_texture = arcade.
-            texture_list =
-            frames = []
-            for tex in texture_list:
-
-            self.player_texture = arcade.load_texture('assets/fisherman.png')
-            self.player_sprite = arcade.Sprite(self.player_texture)
-            self.player_sprite.position = (200, 200)
-            self.player_list = arcade.SpriteList()
-            self.player_list.append(self.player_sprite)
 
         # Loop variables
         # The time in a day
@@ -57,7 +47,7 @@ class GameView(arcade.View):
         self.background_sprite.center_x = WINDOW_WIDTH / 2
         self.background_sprite.center_y = WINDOW_HEIGHT / 2
         # Sets the position of the bobber sprite
-        self.bob_sprite.center_x = 1350
+        self.bob_sprite.center_x = 1160
         self.bob_sprite.center_y = 0
         # The money quota for the first day
         self.money_quota = 100
@@ -75,6 +65,19 @@ class GameView(arcade.View):
         self.lose = False
         # Variable that lets us show a missed fish label for a few seconds
         self.show_missed_label = False
+
+
+        self.player_texture = arcade.load_spritesheet("assets/fisherman.png")
+        texture_list = self.player_texture.get_texture_grid(size=(1350, 756), columns=40, count=40)
+        frames = []
+        for text in texture_list:
+            frames.append(arcade.TextureKeyframe(text))
+        anim = arcade.TextureAnimation(frames)
+        self.player_animation = arcade.TextureAnimationSprite(animation=anim)
+        self.player_animation.position = 675, 375
+        self.player_list.append(self.player_animation)
+
+        self.player_anim_ticks = 0
 
         self.button_appear = False
         self.buttonX = random.randint(100, 1250)
@@ -109,7 +112,8 @@ class GameView(arcade.View):
         arcade.draw_sprite(self.background_sprite)
 
         arcade.draw_sprite(self.current_fish_sprite)
-        self.player_list.draw()
+        self.player_list.draw(pixelated=True)
+
         # Draws the missed fish text once we miss a fish
         if self.show_missed_label:
             arcade.draw_text(f"You missed the fish", WINDOW_WIDTH/2-90, 350, arcade.color.GOLD)
@@ -129,7 +133,13 @@ class GameView(arcade.View):
 
     def on_update(self, delta_time):
         self.physics_engine.update()
-        self.player_list.update()
+        if self.is_animate:
+            self.player_anim_ticks += 1
+            self.player_list.update_animation()
+            if self.player_anim_ticks == 250:
+                self.is_animate = False
+                self.player_anim_ticks = 0
+
         # Tick timer, every tick add one there are 60 ticks in a second
         self.timer += 1
         # Every 5 minutes or 18000 ticks trigger a new day with the trigger mob function
@@ -152,7 +162,7 @@ class GameView(arcade.View):
         # how many seconds you have to catch the fish
         if self.bobber_animation:
             self.bobber_ticks += 1
-            if self.bobber_ticks == self.fish:
+            if self.bobber_ticks == 250:
                 self.fish_is_ready = True
                 self.fish_ticks += 1
                 self.bobber_animation = False
@@ -192,11 +202,13 @@ class GameView(arcade.View):
     def on_mouse_press(self, x, y, button, modifiers):
         dx = x - self.buttonX
         dy = y - self.buttonY
+        print(x,y)
         distance_squared = dx**2 + dy**2
         if button == arcade.MOUSE_BUTTON_LEFT:
             if self.main_loop:
                 self.main_loop = False
                 self.is_fishing = True
+                self.is_animate = True
             if self.fish_is_ready:
                 if self.fish_ticks < 180 and distance_squared <= 50**2:
                     self.fishing_minigame_activate = True
