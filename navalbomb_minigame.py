@@ -1,5 +1,3 @@
-import arcade.color
-
 from library import *
 
 """
@@ -27,7 +25,7 @@ class GameView(arcade.View):
     def __init__(self):
         super().__init__()
 
-        self.background_color = arcade.color.AMAZON
+        self.background_color = arcade.color.BLACK
         self.fish = "mine"
         self.mineX = 500
         self.mineY = 530
@@ -37,6 +35,9 @@ class GameView(arcade.View):
         self.san_der = 0
         self.sanity = 459
         self.death = False
+        self.san_accel = 0
+        self.blackout = 0
+        self.insanity_flag = True
 
         # Setup mine sprites
         self.mine_list = arcade.SpriteList()
@@ -51,9 +52,17 @@ class GameView(arcade.View):
         self.hand_texture = arcade.load_texture("assets/hand.png")
         self.hand_sprite = arcade.Sprite(self.hand_texture, center_x=self.handX, center_y=self.handY)
         self.mine_list.append(self.hand_sprite)
-        self.insanity_texture = arcade.load_texture("assets/insanity.png")
-        self.insanity_sprite = arcade.Sprite(self.insanity_texture, center_x=WINDOW_WIDTH/2, center_y=WINDOW_HEIGHT/2
-                                             , alpha=100)
+
+        # Create camera that will follow the player sprite.
+        self.camera_sprites = arcade.Camera2D()
+
+        self.camera_shake = arcade.camera.grips.ScreenShake2D(
+            self.camera_sprites.view_data,
+            max_amplitude=50.0,
+            acceleration_duration=0.1,
+            falloff_time=100,
+            shake_frequency=50.0,
+        )
         # If you have sprite lists, you should create them here,
         # and set them to None
 
@@ -70,31 +79,49 @@ class GameView(arcade.View):
         # the screen to the background color, and erase what we drew last frame.
         self.clear()
 
+        self.camera_shake.update_camera()
+        self.camera_sprites.use()
+
         # Call draw() on all your sprite lists below
         if self.fish == "mine":
             self.mine_list.draw(pixelated=True)
             arcade.draw_lrbt_rectangle_filled(103, 165.4, 219, 219+self.sanity,
                                               arcade.color.AIR_SUPERIORITY_BLUE)
-
             # Draw insanity blackout
+            arcade.draw_lrbt_rectangle_filled(0, WINDOW_WIDTH, 0, WINDOW_HEIGHT, color=(0, 0, 0, self.blackout))
 
+        self.camera_shake.readjust_camera()
 
     def on_update(self, delta_time):
+        self.camera_shake.update(delta_time)
         # If the naval mine mini-game is engaged execute the following
         if self.fish == "mine":
             # Oscillate hand
             if self.hand_sprite.center_x <= 300:
-                self.hand_vel = 3
-                self.san_der += 2*self.san_der
+                self.san_der = True
+                self.hand_vel = 0
             elif self.hand_sprite.center_x >= 700:
-                self.hand_vel = -3
-                self.san_der -= 2*self.san_der
-            self.hand_sprite.center_x += self.hand_vel + self.san_der
+                self.san_der = False
+                self.hand_vel = 0
+            if self.san_der:
+                self.hand_vel += 1 + self.san_accel
+            if not self.san_der:
+                self.hand_vel -= 1 + self.san_accel
+
+            self.hand_sprite.center_x += self.hand_vel
 
             # Sanity
             self.sanity -= 0.5
-            self.san_der += 0.1
-            self.insanity_sprite.alpha = self.sanity/4.59
+            self.san_accel += 0.005
+            if self.blackout < 254:
+                self.blackout += 0.3
+
+            # Go crazy
+            if self.insanity_flag:
+                self.insanity_flag = False
+                self.camera_shake.start()
+            else:
+                self.camera_shake.stop()
 
     def on_key_press(self, key, key_modifiers):
         """
