@@ -18,11 +18,20 @@ class GameView(arcade.View):
         self.background_texture = arcade.load_texture("assets/background.png")
         self.background_sprite = arcade.Sprite(self.background_texture)
 
-        self.player_texture = arcade.load_texture('assets/arbitrary_asset.png')
-        self.player_sprite = arcade.Sprite(self.player_texture)
-        self.player_sprite.position = (200, 200)
-        self.player_list = arcade.SpriteList()
-        self.player_list.append(self.player_sprite)
+        self.is_animate = False
+
+
+        if self.is_animate:
+            self.player_texture = arcade.
+            texture_list =
+            frames = []
+            for tex in texture_list:
+
+            self.player_texture = arcade.load_texture('assets/fisherman.png')
+            self.player_sprite = arcade.Sprite(self.player_texture)
+            self.player_sprite.position = (200, 200)
+            self.player_list = arcade.SpriteList()
+            self.player_list.append(self.player_sprite)
 
         # Loop variables
         # The time in a day
