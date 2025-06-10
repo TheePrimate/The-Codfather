@@ -1,9 +1,12 @@
 # Main game loop goes here
 import arcade
+import arcade.gui
+from arcade.gui import UIManager, UITextureButton, UIOnClickEvent, UIMessageBox
 
 # from constants import *
 from library import *
 import math
+
 
 class GameView(arcade.View):
     """
@@ -66,18 +69,25 @@ class GameView(arcade.View):
         # Variable that lets us show a missed fish label for a few seconds
         self.show_missed_label = False
 
+        self.manager = arcade.gui.UIManager()
+        self.manager.enable()
+        texture = arcade.load_texture('assets/arbitrary_asset.png')
+        self.test_button = UITextureButton(x=200, y=400, texture=texture)
+        self.message_test = UIMessageBox(width=100, height=200, message_text='hello', title='Title', buttons='OK')
+        self.manager.add(self.test_button)
+        self.manager.add(self.message_test)
 
+        ''''
         self.player_texture = arcade.load_spritesheet("assets/fisherman.png")
         texture_list = self.player_texture.get_texture_grid(size=(1350, 756), columns=40, count=40)
         frames = []
         for text in texture_list:
             frames.append(arcade.TextureKeyframe(text))
         anim = arcade.TextureAnimation(frames)
-        self.player_animation = arcade.TextureAnimationSprite(animation=anim)
-        self.player_animation.position = 675, 375
+        self.player_animation = arcade.TextureAnimationSprite(675, 375, animation=anim)
         self.player_list.append(self.player_animation)
-
         self.player_anim_ticks = 0
+        '''
 
         self.button_appear = False
         self.buttonX = random.randint(100, 1250)
@@ -92,7 +102,7 @@ class GameView(arcade.View):
         self.current_fish = fish_data[current_fish][4]
         self.current_fish_texture = arcade.load_texture(self.current_fish)
         self.current_fish_sprite = arcade.Sprite(self.current_fish_texture)
-        self.current_fish_sprite.position = self.bob_sprite.center_x, 200
+        self.current_fish_sprite.position = self.bob_sprite.center_x-300, 200
 
         self.physics_engine = arcade.PhysicsEnginePlatformer(self.current_fish_sprite, None, GRAVITY-1, None,
                                                              self.player_list)
@@ -110,9 +120,11 @@ class GameView(arcade.View):
         self.clear()
         # Draw the background
         arcade.draw_sprite(self.background_sprite)
+        self.manager.draw()
 
         arcade.draw_sprite(self.current_fish_sprite)
         self.player_list.draw(pixelated=True)
+        self.current_fish_sprite.draw_hit_box()
 
         # Draws the missed fish text once we miss a fish
         if self.show_missed_label:
@@ -133,12 +145,14 @@ class GameView(arcade.View):
 
     def on_update(self, delta_time):
         self.physics_engine.update()
+        ''''
         if self.is_animate:
             self.player_anim_ticks += 1
             self.player_list.update_animation()
             if self.player_anim_ticks == 250:
                 self.is_animate = False
                 self.player_anim_ticks = 0
+        '''
 
         # Tick timer, every tick add one there are 60 ticks in a second
         self.timer += 1
@@ -164,10 +178,8 @@ class GameView(arcade.View):
             self.bobber_ticks += 1
             if self.bobber_ticks == 250:
                 self.fish_is_ready = True
-                self.fish_ticks += 1
                 self.bobber_animation = False
                 self.bobber_ticks = 0
-
         # Once the fish is on the line, start a timer so the bobber can move, after 3 seconds
         if self.fish_is_ready:
             # Current amplitude (2.5px) and frequency (0.25 Hz)
@@ -175,7 +187,6 @@ class GameView(arcade.View):
             self.bob_sprite.center_y = 0 + bobbing_offset
             # Current amplitude (1px) and frequency (0.1 Hz)
             self.bob_sprite.angle = math.sin(self.timer*0.1) * 1
-
             self.fish_ticks += 1
             self.button_appear = True
             if self.fish_ticks >= 180:
@@ -194,7 +205,6 @@ class GameView(arcade.View):
             print(self.is_fishing)
             print(self.bobber_ticks)
 
-
     def on_key_release(self, key, modifiers):
         """Called whenever a key is released."""
         pass
@@ -202,7 +212,6 @@ class GameView(arcade.View):
     def on_mouse_press(self, x, y, button, modifiers):
         dx = x - self.buttonX
         dy = y - self.buttonY
-        print(x,y)
         distance_squared = dx**2 + dy**2
         if button == arcade.MOUSE_BUTTON_LEFT:
             if self.main_loop:
@@ -234,7 +243,6 @@ class GameView(arcade.View):
 
     def trigger_mob(self):
         # Every new day the quota goes up by 10$ and the counter increases while the timer resets
-        print('The baddies are here')
         self.money_quota += 10
         self.day += 1
         self.show_quota_label = True
