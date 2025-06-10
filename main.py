@@ -1,7 +1,7 @@
 # Main game loop goes here
 import arcade
 import arcade.gui
-from arcade.gui import UIManager, UITextureButton, UIOnClickEvent, UIMessageBox
+from arcade.gui import UIManager, UITextureButton, UIDropdown, UISlider
 
 # from constants import *
 from library import *
@@ -72,10 +72,13 @@ class GameView(arcade.View):
         self.manager = arcade.gui.UIManager()
         self.manager.enable()
         texture = arcade.load_texture('assets/arbitrary_asset.png')
-        self.test_button = UITextureButton(x=200, y=400, texture=texture)
-        self.message_test = UIMessageBox(width=100, height=200, message_text='hello', title='Title', buttons='OK')
-        self.manager.add(self.test_button)
-        self.manager.add(self.message_test)
+        texture_hover = arcade.load_texture('assets/albatross.png')
+        self.slider = UISlider(x=500, y=250)
+        self.dropdown = UIDropdown(x=500, y=500, options=['1', '2', '3'])
+        self.button = UITextureButton(x=250, y=300, texture=texture, texture_hovered=texture_hover)
+        self.manager.add(self.button)
+        self.manager.add(self.dropdown)
+        self.manager.add(self.slider)
 
         ''''
         self.player_texture = arcade.load_spritesheet("assets/fisherman.png")
