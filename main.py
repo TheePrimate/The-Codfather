@@ -20,6 +20,8 @@ class GameView(arcade.View):
         self.bob_sprite = arcade.Sprite(self.bob_texture, 0.70)
         self.background_texture = arcade.load_texture("assets/background.png")
         self.background_sprite = arcade.Sprite(self.background_texture)
+        self.fish_texture = arcade.load_texture("assets/cod.png")
+        self.fish_sprite = arcade.Sprite(self.fish_texture)
 
         self.player_list = arcade.SpriteList()
         self.player_texture = None
@@ -49,6 +51,10 @@ class GameView(arcade.View):
         # Sets the position of the background image
         self.background_sprite.center_x = WINDOW_WIDTH / 2
         self.background_sprite.center_y = WINDOW_HEIGHT / 2
+
+        self.fish_sprite.center_x = 1150
+        self.fish_sprite.center_y = 300
+
         # Sets the position of the bobber sprite
         self.bob_sprite.center_x = 1160
         self.bob_sprite.center_y = 0
@@ -68,6 +74,8 @@ class GameView(arcade.View):
         self.lose = False
         # Variable that lets us show a missed fish label for a few seconds
         self.show_missed_label = False
+        # Variable to see when fish should fly towards the player
+        self.fish_animation = False
 
         self.manager = arcade.gui.UIManager()
         self.manager.enable()
@@ -80,7 +88,6 @@ class GameView(arcade.View):
         self.manager.add(self.dropdown)
         self.manager.add(self.slider)
 
-        ''''
         self.player_texture = arcade.load_spritesheet("assets/fisherman.png")
         texture_list = self.player_texture.get_texture_grid(size=(1350, 756), columns=40, count=40)
         frames = []
@@ -90,7 +97,7 @@ class GameView(arcade.View):
         self.player_animation = arcade.TextureAnimationSprite(675, 375, animation=anim)
         self.player_list.append(self.player_animation)
         self.player_anim_ticks = 0
-        '''
+
 
         self.button_appear = False
         self.buttonX = random.randint(100, 1250)
@@ -109,6 +116,8 @@ class GameView(arcade.View):
 
         self.physics_engine = arcade.PhysicsEnginePlatformer(self.current_fish_sprite, None, GRAVITY-1, None,
                                                              self.player_list)
+        self.physics_engine1 = arcade.PhysicsEnginePlatformer(self.fish_sprite, None, GRAVITY-1.5, None,)
+        self.fish_variable = 0
 
     def setup(self):
         """Set up the game here. Call this function to restart the game."""
@@ -145,17 +154,22 @@ class GameView(arcade.View):
             arcade.draw_circle_filled(self.buttonX, self.buttonY, radius=50,
                                       color=(30, 30, 30, 200))
             self.button_message.draw()
+        if self.fish_animation:
+            arcade.draw_sprite(self.fish_sprite)
 
     def on_update(self, delta_time):
         self.physics_engine.update()
-        ''''
+        if self.fish_animation:
+
+            self.physics_engine1.update()
+
         if self.is_animate:
             self.player_anim_ticks += 1
             self.player_list.update_animation()
             if self.player_anim_ticks == 250:
                 self.is_animate = False
                 self.player_anim_ticks = 0
-        '''
+
 
         # Tick timer, every tick add one there are 60 ticks in a second
         self.timer += 1
@@ -200,6 +214,21 @@ class GameView(arcade.View):
                 self.fish_is_ready = False
                 self.main_loop = True
 
+        if self.fish_animation and self.fish_variable == 0:
+            self.fish_variable = 1
+            self.fish_sprite.change_x = -5
+            self.fish_sprite.change_y = 15
+
+        if self.fish_sprite.center_x == 900:
+            self.fish_animation = False
+            self.fish_sprite.center_x = 1150
+            self.fish_sprite.center_y = 300
+            self.fish_sprite.change_y = 15
+
+
+
+
+
     def on_key_press(self, key, modifiers):
         """Called whenever a key is pressed."""
         if key == arcade.key.SPACE:
@@ -223,6 +252,7 @@ class GameView(arcade.View):
                 self.is_animate = True
             if self.fish_is_ready:
                 if self.fish_ticks < 180 and distance_squared <= 50**2:
+                    self.fish_animation = True
                     self.fishing_minigame_activate = True
                     print('minigame activated')
                     self.fish_is_ready = False
