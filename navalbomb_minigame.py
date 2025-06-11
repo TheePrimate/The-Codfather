@@ -60,7 +60,7 @@ class GameView(arcade.View):
         self.mine_list.append(self.hand_sprite)
 
         self.detonator_texture = arcade.load_texture("assets/detonator.png")
-        self.detonator_sprite = arcade.Sprite(self.detonator_texture, center_x= 300, center_y=self.handY)
+        self.detonator_sprite = arcade.Sprite(self.detonator_texture, center_x= 465, center_y=450)
         self.defusal_list.append(self.detonator_sprite)
 
         # Create camera that will follow the player sprite.
@@ -150,7 +150,8 @@ class GameView(arcade.View):
                 self.camera_shake.start()
 
         if self.fish == "disarmed":
-            pass
+            if self.detonator_sprite.center_y > 300:
+                self.detonator_sprite.center_y -= 1
 
     def on_key_press(self, key, key_modifiers):
         """
