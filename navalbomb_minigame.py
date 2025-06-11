@@ -37,14 +37,20 @@ class GameView(arcade.View):
         self.death = False
         self.san_accel = 0
         self.blackout = 0
-        self.insanity_flag = True
+        self.insanity_flag = False
+        self.insanity_check_flag = True
+        self.spont_combst_chance = 0
+        self.water_leaked = 0
+        self.should_init_mine = True
 
         # Setup mine sprites
         self.mine_list = arcade.SpriteList()
+        self.defusal_list = arcade.SpriteList()
 
         self.mine_texture = arcade.load_texture("assets/naval_mine.png")
         self.mine_sprite = arcade.Sprite(self.mine_texture, center_x=self.mineX, center_y=self.mineY)
         self.mine_list.append(self.mine_sprite)
+        self.defusal_list.append(self.mine_sprite)
         self.sanity_bar_texture = arcade.load_texture("assets/sanity_bar.png")
         self.sanity_bar_sprite = arcade.Sprite(self.sanity_bar_texture, center_x=FISHING_MINIGAME_X,
                                                center_y=FISHING_MINIGAME_Y)
@@ -52,6 +58,10 @@ class GameView(arcade.View):
         self.hand_texture = arcade.load_texture("assets/hand.png")
         self.hand_sprite = arcade.Sprite(self.hand_texture, center_x=self.handX, center_y=self.handY)
         self.mine_list.append(self.hand_sprite)
+
+        self.detonator_texture = arcade.load_texture("assets/detonator.png")
+        self.detonator_sprite = arcade.Sprite(self.detonator_texture, center_x= 300, center_y=self.handY)
+        self.defusal_list.append(self.detonator_sprite)
 
         # Create camera that will follow the player sprite.
         self.camera_sprites = arcade.Camera2D()
@@ -69,6 +79,14 @@ class GameView(arcade.View):
     def setup(self):
         """Assign values to all variables"""
         pass
+
+    def init_mine(self):
+        self.spont_combst_chance = random.randint(0, 101)
+        self.water_leaked = random.randint(1, 16)
+        if self.water_leaked == 15:
+            self.spont_combst_chance -= 50
+        if self.spont_combst_chance == 100:
+            self.death = True
 
     def on_draw(self):
         """
@@ -92,10 +110,16 @@ class GameView(arcade.View):
 
         self.camera_shake.readjust_camera()
 
+        if self.fish == "disarmed":
+            self.defusal_list.draw(pixelated=True)
+
     def on_update(self, delta_time):
         self.camera_shake.update(delta_time)
         # If the naval mine mini-game is engaged execute the following
         if self.fish == "mine":
+            if self.should_init_mine:
+                self.should_init_mine = False
+                self.init_mine()
             # Oscillate hand
             if self.hand_sprite.center_x <= 300:
                 self.san_der = True
@@ -116,12 +140,17 @@ class GameView(arcade.View):
             if self.blackout < 254:
                 self.blackout += 0.3
 
+            if self.sanity <= 225 and self.insanity_check_flag:
+                self.insanity_check_flag = False
+                self.insanity_flag = True
+
             # Go crazy
             if self.insanity_flag:
                 self.insanity_flag = False
                 self.camera_shake.start()
-            else:
-                self.camera_shake.stop()
+
+        if self.fish == "disarmed":
+            pass
 
     def on_key_press(self, key, key_modifiers):
         """
@@ -147,12 +176,15 @@ class GameView(arcade.View):
     def on_mouse_press(self, x, y, button, key_modifiers):
         print(x, y)
         if self.fish == "mine":
-            if 300 < self.handX < 400:
+            if 455 < self.handX < 475:
                 print("Bomb Disarmed")
-                self.fish = "Disarmed"
-            elif 400 < self.handX < 450 or 200 < self.handX < 250 or 450 < self.handX < 500:
+                self.fish = "disarmed"
+            elif 370 < self.handX < 400 or 600 < self.handX < 630 or 475 < self.handX < 530:
                 self.death = True
-                self.sanity = 0
+            else:
+                self.spont_combst_chance += 30
+            if self.spont_combst_chance == 100:
+                self.death = True
 
     def on_mouse_release(self, x, y, button, key_modifiers):
         """
