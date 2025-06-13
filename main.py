@@ -79,6 +79,7 @@ class GameView(arcade.View):
 
         self.manager = arcade.gui.UIManager()
         self.manager.enable()
+
         ''''
         self.slider = UISlider(x=500, y=250)
         self.dropdown = UIDropdown(x=500, y=500, options=['1', '2', '3'])
@@ -88,7 +89,8 @@ class GameView(arcade.View):
         texture = arcade.load_texture('assets/button.png')
         texture_hover = arcade.load_texture('assets/arbitrary_asset.png')
         self.button = UITextureButton(x=30, y=650, texture=texture, texture_hovered=texture_hover, scale=1.5,
-                                      text='Fish!', font_name='calibri')
+                                      text='Fish!', style={"normal": UITextureButton.UIStyle(15, "Wingdings"),
+                                                           "hover": UITextureButton.UIStyle(15, 'Wingdings')})
         print(self.button.width, self.button.height)
 
         self.clicked_button = False
@@ -112,7 +114,7 @@ class GameView(arcade.View):
 
         current_fish = random.choices(FISH_LIST, weights=[0.20, 0.20, 0.15, 0.15, 0.05, 0.05,
                                                           0.025, 0.025, 0.02, 0.02, 0.11], k=1)[0]
-        self.current_fish = fish_data[current_fish][4]
+        self.current_fish = fish_data[current_fish][5]
         self.current_fish_texture = arcade.load_texture(self.current_fish)
         self.current_fish_sprite = arcade.Sprite(self.current_fish_texture)
         self.current_fish_sprite.position = self.bob_sprite.center_x-300, 200
