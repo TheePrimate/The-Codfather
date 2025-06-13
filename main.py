@@ -20,6 +20,8 @@ class GameView(arcade.View):
         self.bob_sprite = arcade.Sprite(self.bob_texture, 0.70)
         self.background_texture = arcade.load_texture("assets/background.png")
         self.background_sprite = arcade.Sprite(self.background_texture)
+        self.fish_texture = arcade.load_texture("assets/cod.png")
+        self.fish_sprite = arcade.Sprite(self.fish_texture)
 
         self.player_list = arcade.SpriteList()
         self.player_texture = None
@@ -45,10 +47,14 @@ class GameView(arcade.View):
         # This timer is for the bobbing animation to happen
         self.change_ticks = 0
         # This shows how many seconds are needed before a fish pops up
-        self.fish = random.randint(0, 100)
+        self.fish = random.randint(180, 300)
         # Sets the position of the background image
         self.background_sprite.center_x = WINDOW_WIDTH / 2
         self.background_sprite.center_y = WINDOW_HEIGHT / 2
+
+        self.fish_sprite.center_x = 1150
+        self.fish_sprite.center_y = 300
+
         # Sets the position of the bobber sprite
         self.bob_sprite.center_x = 1160
         self.bob_sprite.center_y = 0
@@ -68,34 +74,38 @@ class GameView(arcade.View):
         self.lose = False
         # Variable that lets us show a missed fish label for a few seconds
         self.show_missed_label = False
+        # Variable to see when fish should fly towards the player
+        self.fish_animation = False
 
         self.manager = arcade.gui.UIManager()
         self.manager.enable()
-        texture = arcade.load_texture('assets/arbitrary_asset.png')
-        texture_hover = arcade.load_texture('assets/albatross.png')
+        ''''
         self.slider = UISlider(x=500, y=250)
         self.dropdown = UIDropdown(x=500, y=500, options=['1', '2', '3'])
-        self.button = UITextureButton(x=250, y=300, texture=texture, texture_hovered=texture_hover)
-        self.manager.add(self.button)
         self.manager.add(self.dropdown)
         self.manager.add(self.slider)
+        '''
+        texture = arcade.load_texture('assets/button.png')
+        texture_hover = arcade.load_texture('assets/arbitrary_asset.png')
+        self.button = UITextureButton(x=30, y=650, texture=texture, texture_hovered=texture_hover, scale=1.5,
+                                      text='Fish!', font_name='calibri')
+        print(self.button.width, self.button.height)
 
-        ''''
+        self.clicked_button = False
+        self.button.on_click = self.button_clicked
+        self.button.visible = True
+        self.manager.add(self.button)
+
         self.player_texture = arcade.load_spritesheet("assets/fisherman.png")
         texture_list = self.player_texture.get_texture_grid(size=(1350, 756), columns=40, count=40)
         frames = []
         for text in texture_list:
-            frames.append(arcade.TextureKeyframe(text))
-        anim = arcade.TextureAnimation(frames)
-        self.player_animation = arcade.TextureAnimationSprite(675, 375, animation=anim)
+            frames.append(arcade.TextureKeyframe(text, duration=50))
+        self.anim = arcade.TextureAnimation(frames)
+        self.player_animation = arcade.TextureAnimationSprite(675, 375, animation=self.anim)
         self.player_list.append(self.player_animation)
         self.player_anim_ticks = 0
-        '''
 
-        self.button_appear = False
-        self.buttonX = random.randint(100, 1250)
-        self.buttonY = random.randint(50, 700)
-        self.button_message = arcade.Text("Click!", self.buttonX, self.buttonY, anchor_x='center', anchor_y='center')
         # Lets us know when the main loop is going on and not any minigames
         self.main_loop = True
         self.background_color = arcade.csscolor.CORNFLOWER_BLUE
@@ -109,6 +119,8 @@ class GameView(arcade.View):
 
         self.physics_engine = arcade.PhysicsEnginePlatformer(self.current_fish_sprite, None, GRAVITY-1, None,
                                                              self.player_list)
+        self.physics_engine1 = arcade.PhysicsEnginePlatformer(self.fish_sprite, None, GRAVITY-1.5, None,)
+        self.fish_variable = 0
 
     def setup(self):
         """Set up the game here. Call this function to restart the game."""
@@ -122,12 +134,24 @@ class GameView(arcade.View):
         # frame of the game.
         self.clear()
         # Draw the background
+
         arcade.draw_sprite(self.background_sprite)
         self.manager.draw()
+
+        arcade.draw_lbwh_rectangle_outline(
+            self.button.center_x-self.button.width/2,
+            self.button.center_y-self.button.height/2,
+            self.button.width,
+            self.button.height,
+            color=arcade.color.RED,
+            border_width=2
+        )
 
         arcade.draw_sprite(self.current_fish_sprite)
         self.player_list.draw(pixelated=True)
         self.current_fish_sprite.draw_hit_box()
+        arcade.draw_sprite(self.fish_sprite)
+
 
         # Draws the missed fish text once we miss a fish
         if self.show_missed_label:
@@ -141,21 +165,23 @@ class GameView(arcade.View):
         if self.is_fishing:
             self.bobber_animation = True
             arcade.draw_sprite(self.bob_sprite)
-        if self.button_appear:
-            arcade.draw_circle_filled(self.buttonX, self.buttonY, radius=50,
-                                      color=(30, 30, 30, 200))
-            self.button_message.draw()
 
     def on_update(self, delta_time):
         self.physics_engine.update()
-        ''''
+
+        if self.fish_animation:
+            self.physics_engine1.update()
+
         if self.is_animate:
-            self.player_anim_ticks += 1
-            self.player_list.update_animation()
-            if self.player_anim_ticks == 250:
-                self.is_animate = False
+            self.player_anim_ticks += delta_time
+            if self.player_anim_ticks <= self.anim.duration_seconds:
+                self.player_list.update_animation(delta_time)
+            else:
                 self.player_anim_ticks = 0
-        '''
+                self.is_animate = False
+                # Reset to first frame so it starts fresh next time
+                self.player_animation.current_keyframe_index = 0
+                self.player_animation.texture = self.anim.keyframes[0].texture
 
         # Tick timer, every tick add one there are 60 ticks in a second
         self.timer += 1
@@ -189,16 +215,53 @@ class GameView(arcade.View):
             bobbing_offset = math.sin(self.timer * 0.25) * 2.5
             self.bob_sprite.center_y = 0 + bobbing_offset
             # Current amplitude (1px) and frequency (0.1 Hz)
-            self.bob_sprite.angle = math.sin(self.timer*0.1) * 1
+            self.bob_sprite.angle = math.sin(self.timer * 0.1) * 1
             self.fish_ticks += 1
-            self.button_appear = True
-            if self.fish_ticks >= 180:
-                self.fish_ticks = 0
-                self.is_fishing = False
-                self.button_appear = False
-                self.show_missed_label = True
-                self.fish_is_ready = False
-                self.main_loop = True
+            self.button.visible = True
+
+            if self.fish_is_ready:
+                self.fish_ticks += 1
+                self.button.visible = True
+
+                if self.fish_ticks < 240:
+                    if self.clicked_button:
+                        print("minigame activated")
+                        self.fishing_minigame_activate = True
+                        self.fish_animation = True
+                        self.show_missed_label = False
+                        # Reset
+                        self.clicked_button = False
+                        self.fish_ticks = 0
+                        self.fish_is_ready = False
+                        self.is_fishing = False
+                        self.button.visible = False
+                        self.bobber_animation = False
+                        self.main_loop = True
+                else:
+                    self.clicked_button = False
+                    self.fish_ticks = 0
+                    self.fish_is_ready = False
+                    self.is_fishing = False
+                    self.button.visible = False
+                    self.bobber_animation = False
+                    self.main_loop = True
+                    self.show_missed_label = True
+
+        if self.fish_animation and self.fish_variable == 0:
+            self.fish_variable = 1
+            self.fish_sprite.change_x = -5
+            self.fish_sprite.change_y = 15
+
+        if self.fish_sprite.center_x == 900:
+            self.fish_animation = False
+            self.fish_sprite.center_x = 1150
+            self.fish_sprite.center_y = 300
+            self.fish_sprite.change_y = 15
+
+    def button_clicked(self, event):
+        self.clicked_button = True
+        print('e')
+
 
     def on_key_press(self, key, modifiers):
         """Called whenever a key is pressed."""
@@ -208,41 +271,12 @@ class GameView(arcade.View):
             print(self.is_fishing)
             print(self.bobber_ticks)
 
-    def on_key_release(self, key, modifiers):
-        """Called whenever a key is released."""
-        pass
-
     def on_mouse_press(self, x, y, button, modifiers):
-        dx = x - self.buttonX
-        dy = y - self.buttonY
-        distance_squared = dx**2 + dy**2
-        if button == arcade.MOUSE_BUTTON_LEFT:
-            if self.main_loop:
-                self.main_loop = False
-                self.is_fishing = True
-                self.is_animate = True
-            if self.fish_is_ready:
-                if self.fish_ticks < 180 and distance_squared <= 50**2:
-                    self.fishing_minigame_activate = True
-                    print('minigame activated')
-                    self.fish_is_ready = False
-                    self.is_fishing = False
-                    self.bobber_animation = False
-                    self.main_loop = True
-                    self.buttonX, self.buttonY = random.randint(100, 1250), random.randint(50, 700)
-                    self.button_message.x, self.button_message.y = self.buttonX, self.buttonY
-                    self.button_appear = False
-                    self.fish_ticks = 0
-                else:
-                    self.show_missed_label = True
-                    self.fish_is_ready = False
-                    self.is_fishing = False
-                    self.bobber_animation = False
-                    self.main_loop = True
-                    self.buttonX, self.buttonY = random.randint(100, 1250), random.randint(50, 700)
-                    self.button_message.x, self.button_message.y = self.buttonX, self.buttonY
-                    self.fish_ticks = 0
-                    self.button_appear = False
+            if button == arcade.MOUSE_BUTTON_LEFT:
+                if self.main_loop:
+                    self.main_loop = False
+                    self.is_fishing = True
+                    self.is_animate = True
 
     def trigger_mob(self):
         # Every new day the quota goes up by 10$ and the counter increases while the timer resets
@@ -252,11 +286,10 @@ class GameView(arcade.View):
         self.timer = 0
 
 
-
 class GameStartView(arcade.View):
     def __init__(self):
         super().__init__()
-        self.texture = arcade.load_texture("assets/arbitrary_asset.png")
+
 
     def setup(self):
         pass
@@ -266,7 +299,6 @@ class GameStartView(arcade.View):
 
     def on_draw(self):
         self.clear()
-        arcade.draw_texture_rect(self.texture, rect=arcade.LBWH(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT))
         arcade.draw_text("Start Screen", 100, 300, arcade.color.WHITE, 30)
 
     def on_mouse_press(self, x: int, y: int, button: int, modifiers: int) -> bool | None:
@@ -288,7 +320,7 @@ class RulesView(arcade.View):
         pass
 
     def on_show_view(self):
-        arcade.set_background_color(arcade.color.WHITE)
+        arcade.set_background_color(arcade.color.BLACK)
 
     def on_draw(self):
         self.clear()
