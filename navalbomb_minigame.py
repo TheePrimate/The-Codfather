@@ -42,7 +42,7 @@ class GameView(arcade.View):
         # Setup mine sprites
         self.mine_list = arcade.SpriteList()
 
-        self.mine_texture = arcade.load_texture("assets/naval_mine.png")
+        self.mine_texture = arcade.load_texture("assets/naval_bomb.png")
         self.mine_sprite = arcade.Sprite(self.mine_texture, center_x=self.mineX, center_y=self.mineY)
         self.mine_list.append(self.mine_sprite)
         self.sanity_bar_texture = arcade.load_texture("assets/sanity_bar.png")

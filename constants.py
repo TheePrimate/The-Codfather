@@ -8,10 +8,7 @@ TICK_RATE = 60
 
 FISHING_MINIGAME_X = 135
 FISHING_MINIGAME_Y = 450
-FISH_LIST = ("Rainbow Trout", "Dumbo Octopus", "Cod",
-             "Ancient Mariner's Albatross", "Bluefin Tuna",
-             "Immortal Jellyfish", "Snoek", "Marlin", "Northern Pike",
-             "Sockeye Salmon", "Naval Bomb")
+
 DIFFICULTY_1_LOW = 1
 DIFFICULTY_1_HIGH = 4
 

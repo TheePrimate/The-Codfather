@@ -1,15 +1,17 @@
 Grade 12 Game
 
 Instructions:
-Install python 3.13.4 from: https://www.python.org/downloads/release/python-3134/
-Install python packages: arcade 3.2.0 and numpy 2.3.0rc1
+    1. Install python 3.13.4 from: https://www.python.org/downloads/release/python-3134/
+    2. Install python packages: arcade 3.2.0 and numpy 2.3.0rc1
+    3. Run "game.py"
+    4. Have fun
 
 Credits:
 Ryan Butcher
 Pearson Tran
 Nathan Yang
 Kayden Zhao
-# AI such as ChatGPT and Microsoft Copilot was used lightly in this production #
+/|| AI such as ChatGPT and Microsoft Copilot were used lightly in this production ||\
 
 Art:
 All assets were drawn by either Ryan or
