@@ -87,8 +87,9 @@ class GameView(arcade.View):
         '''
         texture = arcade.load_texture('assets/button.png')
         texture_hover = arcade.load_texture('assets/arbitrary_asset.png')
-        self.button = UITextureButton(x=200, y=200, texture=texture,
-                                     texture_pressed=texture_hover)
+        self.button = UITextureButton(x=30, y=650, texture=texture, texture_hovered=texture_hover, scale=1.5,
+                                      text='Fish!', font_name='calibri')
+        print(self.button.width, self.button.height)
 
         self.clicked_button = False
         self.button.on_click = self.button_clicked
@@ -136,6 +137,15 @@ class GameView(arcade.View):
 
         arcade.draw_sprite(self.background_sprite)
         self.manager.draw()
+
+        arcade.draw_lbwh_rectangle_outline(
+            self.button.center_x-self.button.width/2,
+            self.button.center_y-self.button.height/2,
+            self.button.width,
+            self.button.height,
+            color=arcade.color.RED,
+            border_width=2
+        )
 
         arcade.draw_sprite(self.current_fish_sprite)
         self.player_list.draw(pixelated=True)
@@ -250,6 +260,7 @@ class GameView(arcade.View):
 
     def button_clicked(self, event):
         self.clicked_button = True
+        print('e')
 
 
     def on_key_press(self, key, modifiers):
@@ -278,7 +289,7 @@ class GameView(arcade.View):
 class GameStartView(arcade.View):
     def __init__(self):
         super().__init__()
-        self.texture = arcade.load_texture("assets/arbitrary_asset.png")
+
 
     def setup(self):
         pass
@@ -288,7 +299,6 @@ class GameStartView(arcade.View):
 
     def on_draw(self):
         self.clear()
-        arcade.draw_texture_rect(self.texture, rect=arcade.LBWH(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT))
         arcade.draw_text("Start Screen", 100, 300, arcade.color.WHITE, 30)
 
     def on_mouse_press(self, x: int, y: int, button: int, modifiers: int) -> bool | None:
@@ -310,7 +320,7 @@ class RulesView(arcade.View):
         pass
 
     def on_show_view(self):
-        arcade.set_background_color(arcade.color.WHITE)
+        arcade.set_background_color(arcade.color.BLACK)
 
     def on_draw(self):
         self.clear()
