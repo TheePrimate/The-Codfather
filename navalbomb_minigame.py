@@ -42,10 +42,17 @@ class GameView(arcade.View):
         self.spont_combst_chance = 0
         self.water_leaked = 0
         self.should_init_mine = True
+        self.jeep_texture = None
+        self.jeep_list = arcade.SpriteList()
+        self.jeep_flag = False
 
         # Setup mine sprites
         self.mine_list = arcade.SpriteList()
         self.defusal_list = arcade.SpriteList()
+
+        self.detonator_texture = arcade.load_texture("assets/detonator.png")
+        self.detonator_sprite = arcade.Sprite(self.detonator_texture, center_x=451, center_y=450)
+        self.defusal_list.append(self.detonator_sprite)
 
         self.mine_texture = arcade.load_texture("assets/naval_bomb.png")
         self.mine_sprite = arcade.Sprite(self.mine_texture, center_x=self.mineX, center_y=self.mineY)
@@ -56,12 +63,8 @@ class GameView(arcade.View):
                                                center_y=FISHING_MINIGAME_Y)
         self.mine_list.append(self.sanity_bar_sprite)
         self.hand_texture = arcade.load_texture("assets/hand.png")
-        self.hand_sprite = arcade.Sprite(self.hand_texture, center_x=self.handX, center_y=self.handY)
+        self.hand_sprite = arcade.Sprite(self.hand_texture, center_x=self.handX, center_y=340)
         self.mine_list.append(self.hand_sprite)
-
-        self.detonator_texture = arcade.load_texture("assets/detonator.png")
-        self.detonator_sprite = arcade.Sprite(self.detonator_texture, center_x= 465, center_y=450)
-        self.defusal_list.append(self.detonator_sprite)
 
         # Create camera that will follow the player sprite.
         self.camera_sprites = arcade.Camera2D()
@@ -87,6 +90,7 @@ class GameView(arcade.View):
             self.spont_combst_chance -= 50
         if self.spont_combst_chance == 100:
             self.death = True
+        self.handY = 340
 
     def on_draw(self):
         """
@@ -112,8 +116,11 @@ class GameView(arcade.View):
 
         if self.fish == "disarmed":
             self.defusal_list.draw(pixelated=True)
+            self.jeep_list.draw()
 
     def on_update(self, delta_time):
+        if self.jeep_flag:
+            self.jeep_list.update_animation()
         self.camera_shake.update(delta_time)
         # If the naval mine mini-game is engaged execute the following
         if self.fish == "mine":
@@ -150,8 +157,27 @@ class GameView(arcade.View):
                 self.camera_shake.start()
 
         if self.fish == "disarmed":
-            if self.detonator_sprite.center_y > 300:
+            if self.detonator_sprite.center_y > 250:
                 self.detonator_sprite.center_y -= 1
+            else:
+                self.handY -= 1
+            if self.handY == 300:
+                self.handY = 340
+                self.detonator_sprite.alpha = 0
+                self.init_b_and_m()
+                self.jeep_flag = True
+
+    def init_b_and_m(self):
+        print("The British are here!")
+        self.jeep_texture = arcade.load_spritesheet("assets/b_and_m.png")
+        texture_list = self.jeep_texture.get_texture_grid(size=(1350, 756), columns=40, count=40)
+        frames = []
+        for text in texture_list:
+            frames.append(arcade.TextureKeyframe(text, duration=50))
+        self.anim_jeep = arcade.TextureAnimation(frames)
+        self.jeep_animation = arcade.TextureAnimationSprite(675, 375, animation=self.anim_jeep)
+        self.jeep_list.append(self.jeep_animation)
+        self.jeep_anim_ticks = 0
 
     def on_key_press(self, key, key_modifiers):
         """
@@ -177,10 +203,12 @@ class GameView(arcade.View):
     def on_mouse_press(self, x, y, button, key_modifiers):
         print(x, y)
         if self.fish == "mine":
-            if 455 < self.handX < 475:
+            if 455 < self.hand_sprite.center_x < 500:
                 print("Bomb Disarmed")
                 self.fish = "disarmed"
-            elif 370 < self.handX < 400 or 600 < self.handX < 630 or 475 < self.handX < 530:
+                self.camera_shake.stop()
+            elif (370 < self.hand_sprite.center_x < 400 or 600 < self.hand_sprite.center_x < 630 or 500 <
+                  self.hand_sprite.center_x < 530):
                 self.death = True
             else:
                 self.spont_combst_chance += 30
