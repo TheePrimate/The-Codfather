@@ -179,7 +179,7 @@ class FishingMiniGame(arcade.Window):
         self.sprite_list.update()
         self.physics_engine1.update()
         self.physics_engine2.update()
-        self.sprite_list.update_animation()
+        self.current_fish_list.update_animation()
 
         self.collision = arcade.check_for_collision(self.hook_sprite, self.indicator_sprite)
         if self.choose_fish is True:
