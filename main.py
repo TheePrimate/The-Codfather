@@ -81,14 +81,11 @@ class GameView(arcade.View):
         self.manager.enable()
 
         default_button = arcade.load_texture('assets/default_button.png')
-        press_button = arcade.load_texture('assets/pressed_button')
-        self.button = UITextureButton(x=30, y=400, texture=default_button)
-
-        print(self.button.width, self.button.height)
-
+        press_button = arcade.load_texture('assets/pressed_button.png')
+        self.button = UITextureButton(x=50, y=50, texture=default_button, texture_pressed=press_button, scale=0.6)
         self.clicked_button = False
+        self.button.visible = False
         self.button.on_click = self.button_clicked
-        self.button.visible = True
         self.manager.add(self.button)
 
         self.player_texture = arcade.load_spritesheet("assets/fisherman.png")
@@ -110,10 +107,11 @@ class GameView(arcade.View):
         self.current_fish = fish_data[current_fish][5]
         self.current_fish_texture = arcade.load_texture(self.current_fish)
         self.current_fish_sprite = arcade.Sprite(self.current_fish_texture)
-        self.current_fish_sprite.position = self.bob_sprite.center_x-300, 200
+        self.current_fish_sprite.position = 1300, 0
 
         self.physics_engine = arcade.PhysicsEnginePlatformer(self.current_fish_sprite, None, GRAVITY-1, None,
                                                              self.player_list)
+
         self.physics_engine1 = arcade.PhysicsEnginePlatformer(self.fish_sprite, None, GRAVITY-1.5, None,)
         self.fish_variable = 0
 
@@ -129,18 +127,9 @@ class GameView(arcade.View):
         # frame of the game.
         self.clear()
         # Draw the background
-
         arcade.draw_sprite(self.background_sprite)
-        self.manager.draw()
 
-        arcade.draw_lbwh_rectangle_outline(
-            self.button.center_x-self.button.width/2,
-            self.button.center_y-self.button.height/2,
-            self.button.width,
-            self.button.height,
-            color=arcade.color.RED,
-            border_width=2
-        )
+        self.manager.draw()
 
         arcade.draw_sprite(self.current_fish_sprite)
         self.player_list.draw(pixelated=True)
@@ -162,10 +151,9 @@ class GameView(arcade.View):
             arcade.draw_sprite(self.bob_sprite)
 
     def on_update(self, delta_time):
-        self.physics_engine.update()
 
         if self.fish_animation:
-            self.physics_engine1.update()
+            self.physics_engine.update()
 
         if self.is_animate:
             self.player_anim_ticks += delta_time
@@ -244,8 +232,8 @@ class GameView(arcade.View):
 
         if self.fish_animation and self.fish_variable == 0:
             self.fish_variable = 1
-            self.fish_sprite.change_x = -5
-            self.fish_sprite.change_y = 15
+            self.current_fish_sprite.change_x = -15
+            self.current_fish_sprite.change_y = 30
 
         if self.fish_sprite.center_x == 900:
             self.fish_animation = False
@@ -254,9 +242,8 @@ class GameView(arcade.View):
             self.fish_sprite.change_y = 15
 
     def button_clicked(self, event):
-        self.clicked_button = True
-        print('e')
-
+        if self.fish_is_ready:
+            self.clicked_button = True
 
     def on_key_press(self, key, modifiers):
         """Called whenever a key is pressed."""
