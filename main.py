@@ -80,17 +80,10 @@ class GameView(arcade.View):
         self.manager = arcade.gui.UIManager()
         self.manager.enable()
 
-        ''''
-        self.slider = UISlider(x=500, y=250)
-        self.dropdown = UIDropdown(x=500, y=500, options=['1', '2', '3'])
-        self.manager.add(self.dropdown)
-        self.manager.add(self.slider)
-        '''
-        texture = arcade.load_texture('assets/button.png')
-        texture_hover = arcade.load_texture('assets/arbitrary_asset.png')
-        self.button = UITextureButton(x=30, y=650, texture=texture, texture_hovered=texture_hover, scale=1.5,
-                                      text='Fish!', style={"normal": UITextureButton.UIStyle(15, "Wingdings"),
-                                                           "hover": UITextureButton.UIStyle(15, 'Wingdings')})
+        default_button = arcade.load_texture('assets/default_button.png')
+        press_button = arcade.load_texture('assets/pressed_button')
+        self.button = UITextureButton(x=30, y=400, texture=default_button)
+
         print(self.button.width, self.button.height)
 
         self.clicked_button = False
