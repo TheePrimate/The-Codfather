@@ -1,26 +1,9 @@
 from library import *
 
-"""
-Starting Template
-
-Once you have learned how to use classes, you can begin your program with this
-template.
-
-If Python and Arcade are installed, this example can be run from the command line with:
-python -m arcade.examples.starting_template
-"""
-
 WINDOW_TITLE = "Starting Template"
 
 
 class GameView(arcade.View):
-    """
-    Main application class.
-
-    NOTE: Go ahead and delete the methods you don't need.
-    If you do need a method, delete the 'pass' and replace it
-    with your own code. Don't leave 'pass' in this program.
-    """
 
     def __init__(self):
         super().__init__()
@@ -45,6 +28,11 @@ class GameView(arcade.View):
         self.jeep_texture = None
         self.jeep_list = arcade.SpriteList()
         self.jeep_flag = False
+        self.anim_jeep = None
+        self.jeep_animation = None
+        self.jeep_anim_ticks = None
+        self.jeep_secondary_flag = True
+        self.jeep_tertiary_flag = 0
 
         # Setup mine sprites
         self.mine_list = arcade.SpriteList()
@@ -79,10 +67,6 @@ class GameView(arcade.View):
         # If you have sprite lists, you should create them here,
         # and set them to None
 
-    def setup(self):
-        """Assign values to all variables"""
-        pass
-
     def init_mine(self):
         self.spont_combst_chance = random.randint(0, 101)
         self.water_leaked = random.randint(1, 16)
@@ -91,6 +75,8 @@ class GameView(arcade.View):
         if self.spont_combst_chance == 100:
             self.death = True
         self.handY = 340
+        self.jeep_secondary_flag = True
+        self.jeep_tertiary_flag = 0
 
     def on_draw(self):
         """
@@ -116,7 +102,7 @@ class GameView(arcade.View):
 
         if self.fish == "disarmed":
             self.defusal_list.draw(pixelated=True)
-            self.jeep_list.draw()
+            self.jeep_list.draw(pixelated=True)
 
     def on_update(self, delta_time):
         if self.jeep_flag:
@@ -164,11 +150,18 @@ class GameView(arcade.View):
             if self.handY == 300:
                 self.handY = 340
                 self.detonator_sprite.alpha = 0
-                self.init_b_and_m()
+                if self.jeep_secondary_flag:
+                    self.init_b_and_m()
                 self.jeep_flag = True
+                self.jeep_tertiary_flag += 1
+                if self.jeep_tertiary_flag == 3:
+                    self.jeep_list.pop()
+                    self.jeep_flag = False
+                    self.fish = "None"
+                if self.jeep_tertiary_flag == 2:
+                    self.defusal_list.pop()
 
     def init_b_and_m(self):
-        print("The British are here!")
         self.jeep_texture = arcade.load_spritesheet("assets/b_and_m.png")
         texture_list = self.jeep_texture.get_texture_grid(size=(1350, 756), columns=40, count=40)
         frames = []
@@ -178,33 +171,11 @@ class GameView(arcade.View):
         self.jeep_animation = arcade.TextureAnimationSprite(675, 375, animation=self.anim_jeep)
         self.jeep_list.append(self.jeep_animation)
         self.jeep_anim_ticks = 0
-
-    def on_key_press(self, key, key_modifiers):
-        """
-        Called whenever a key on the keyboard is pressed.
-
-        For a full list of keys, see:
-        https://api.arcade.academy/en/latest/arcade.key.html
-        """
-        pass
-
-    def on_key_release(self, key, key_modifiers):
-        """
-        Called whenever the user lets off a previously pressed key.
-        """
-        pass
-
-    def on_mouse_motion(self, x, y, delta_x, delta_y):
-        """
-        Called whenever the mouse moves.
-        """
-        pass
+        self.jeep_secondary_flag = False
 
     def on_mouse_press(self, x, y, button, key_modifiers):
-        print(x, y)
         if self.fish == "mine":
             if 455 < self.hand_sprite.center_x < 500:
-                print("Bomb Disarmed")
                 self.fish = "disarmed"
                 self.camera_shake.stop()
             elif (370 < self.hand_sprite.center_x < 400 or 600 < self.hand_sprite.center_x < 630 or 500 <
@@ -215,13 +186,7 @@ class GameView(arcade.View):
             if self.spont_combst_chance == 100:
                 self.death = True
 
-    def on_mouse_release(self, x, y, button, key_modifiers):
-        """
-        Called when a user releases a mouse button.
-        """
-        pass
-
-
+                
 def main():
     """ Main function """
     # Create a window class. This is what actually shows up on screen
