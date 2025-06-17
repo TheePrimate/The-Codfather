@@ -60,13 +60,13 @@ class GameView(arcade.View):
         self.bob_sprite.center_x = 1160
         self.bob_sprite.center_y = 0
         # The money quota for the first day
-        self.money_quota = 100
+        self.money_quota = 5000
+        self.quota_text = arcade.Text(f"Quota: {self.money_quota}", WINDOW_WIDTH/2-180, 700,
+                                      font_name='Pixeled')
         # Lets us know when the bobber sprite should start bobbing
         self.fish_is_ready = False
         # Lets us know when the bobber gets thrown into the water
         self.bobber_animation = False
-        # Lets us show the days quota for only a certain amount of time
-        self.show_quota_label = False
         # Lets us know when the person starts fishing, as soon as the mouse is clicked
         self.is_fishing = False
         # Once you successfully click when the bobber moves, the minigame shall activate
@@ -112,18 +112,20 @@ class GameView(arcade.View):
         # Chooses a random fish from the FISH_LIST with specific weights/chances. Then creates the specific fish sprite.
         current_fish = random.choices(FISH_LIST, weights=[0.20, 0.20, 0.15, 0.15, 0.05, 0.05,
                                                           0.025, 0.025, 0.02, 0.02, 0.11], k=1)[0]
-        self.current_fish = fish_data[current_fish][5]
+        self.current_fish = fish_data['Rainbow Trout'][5]
         self.current_fish_price = fish_data[current_fish][1]
         self.current_fish_texture = arcade.load_texture(self.current_fish)
         self.current_fish_sprite = arcade.Sprite(self.current_fish_texture)
         print(self.current_fish)
-        self.current_fish_sprite.position = 1500, -60
+        self.current_fish_sprite.position = 1550, -105
 
         self.fish_list.append(self.current_fish_sprite)
         # Physics Engine
         self.physics_engine = arcade.PhysicsEnginePlatformer(self.current_fish_sprite, None, GRAVITY-1, None,
                                                              self.player_list)
 
+        self.start_animate = False
+        self.fish_done = False
         self.fish_variable = 0
 
     def setup(self):
@@ -143,15 +145,17 @@ class GameView(arcade.View):
         self.manager.draw()
 
         # Drawing all the sprites
-        self.fish_list.draw()
+        self.fish_list.draw(pixelated=True)
         self.player_list.draw(pixelated=True)
+        self.current_fish_sprite.draw_hit_box()
+        self.player_animation.draw_hit_box()
+
 
         # Draws the missed fish text once we miss a fish
         if self.show_missed_label:
             arcade.draw_text(f"You missed the fish", WINDOW_WIDTH/2-90, 350, arcade.color.GOLD)
-        # Draws the quota every new day
-        if self.show_quota_label:
-            arcade.draw_text(f"Today's Quota: ${self.money_quota}",WINDOW_WIDTH/2-180, 700, arcade.color.YELLOW,24)
+        # Draws the quota
+        self.quota_text.draw()
         # Shows what day it is at the bottom of the screen
         self.day_text.draw()
         # Once the fishing starts, draw the bobber and start counting the time before the bobber should start moving
@@ -189,12 +193,6 @@ class GameView(arcade.View):
             if self.missed_ticks == 60:
                 self.missed_ticks = 0
                 self.show_missed_label = False
-        # Shows a quota at the start of a new day for 4 seconds
-        if self.show_quota_label:
-            self.label_timer_ticks += 1
-            if self.label_timer_ticks >= 240:
-                self.show_quota_label = False
-                self.label_timer_ticks = 0
         # Counts how many ticks the bobber has been in the water for, if it matches self.fish,
         # Start the bobbing animation as a fish is on the line and start a counter for
         # how many seconds you have to catch the fish
@@ -248,23 +246,26 @@ class GameView(arcade.View):
         # Fish animation (changes y and x)
         if self.fish_animation and self.fish_variable == 0:
             self.fish_variable = 1
-            self.current_fish_sprite.change_x = -8
-            self.current_fish_sprite.change_y = 38
+            self.physics_engine.jump(40)
+            self.current_fish_sprite.change_x = -10
 
-        start_animate = False
-        if 900 > self.current_fish_sprite.center_x > 730:
-            if self.current_fish_sprite.center_y > 480:
-                start_animate = True
-        if start_animate:
+        if 950 > self.current_fish_sprite.center_x > 720:
+            if self.current_fish_sprite.center_y >= 420:
+                self.start_animate = True
+                self.fish_animation = False
+
+        if self.start_animate:
             # Gently override position to simulate float
             self.current_fish_sprite.center_y += math.sin(self.timer * 0.1) * 6
-            self.current_fish_sprite.change_x, self.current_fish_sprite.change_y = 0, 0
             self.fish_timer += 1
-            self.fish_animation = False
-            if self.fish_timer == 180:
+            if self.fish_timer == 180 and not self.fish_done:
                 self.fish_list.clear()
                 self.fish_timer = 0
-            start_animate = False
+                self.money_quota -= self.current_fish_price
+                self.quota_text.text = f'Quota: {self.money_quota}'
+                self.fish_done = True
+                self.current_fish_sprite.position = 1500, -60
+            self.start_animate = False
 
     # Function specifically for registering clicks from the button. Once the button is clicked, this function will run.
     def button_clicked(self, event):
@@ -288,12 +289,12 @@ class GameView(arcade.View):
                     self.main_loop = False
                     self.is_fishing = True
                     self.is_animate = True
+                print(x,y)
 
     def new_day(self):
         # Every new day the quota goes up by 10$ and the counter increases while the timer resets
-        self.money_quota += 10
+        self.money_quota += 2500
         self.day += 1
-        self.show_quota_label = True
         self.timer = 0
 
 
@@ -335,6 +336,9 @@ class GameOverView(arcade.View):
 
     def on_show_view(self):
         arcade.set_background_color(arcade.color.BLACK)
+
+    def on_update(self, delta_time):
+        self.money_quota += 1
 
     def on_draw(self):
         self.clear()
