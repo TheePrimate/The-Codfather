@@ -30,13 +30,17 @@ class GameView(arcade.View):
 
         # Loop variables
         # The time in a day
-        self.day_timer = 0
         self.timer = 0
         # Which day it is
         self.day = 0
+        # TBD if this shows up all day or only when the day starts and between the days?
         self.day_text = arcade.Text(f"Day: {self.day}", WINDOW_WIDTH/2-70, 50, font_name='Pixeled',
                                     font_size=20, color=arcade.color.WHITE)
-
+        self.game_time_minutes = 6 * 60
+        self.clock_speed = 4.8 # 1 real second = 4.8 in-game minute
+        self.clock_text = arcade.Text('', x=100, y=600, font_size=20, font_name='Pixeled')
+        self.balance = 0
+        self.balance_text = arcade.Text(f'Money: {self.balance}', x=1000, y=700, font_name='Pixeled', font_size=20)
         # How much money we have
         self.money = 0
         # All the mini timers that are needed to keep track of certain variables
@@ -60,7 +64,7 @@ class GameView(arcade.View):
         self.bob_sprite.center_x = 1160
         self.bob_sprite.center_y = 0
         # The money quota for the first day
-        self.money_quota = 5000
+        self.money_quota = 250
         self.quota_text = arcade.Text(f"Quota: {self.money_quota}", WINDOW_WIDTH/2-180, 700,
                                       font_name='Pixeled')
         # Lets us know when the bobber sprite should start bobbing
@@ -112,7 +116,7 @@ class GameView(arcade.View):
         # Chooses a random fish from the FISH_LIST with specific weights/chances. Then creates the specific fish sprite.
         current_fish = random.choices(FISH_LIST, weights=[0.20, 0.20, 0.15, 0.15, 0.05, 0.05,
                                                           0.025, 0.025, 0.02, 0.02, 0.11], k=1)[0]
-        self.current_fish = fish_data['Rainbow Trout'][5]
+        self.current_fish = fish_data[current_fish][5]
         self.current_fish_price = fish_data[current_fish][1]
         self.current_fish_texture = arcade.load_texture(self.current_fish)
         self.current_fish_sprite = arcade.Sprite(self.current_fish_texture)
@@ -147,9 +151,10 @@ class GameView(arcade.View):
         # Drawing all the sprites
         self.fish_list.draw(pixelated=True)
         self.player_list.draw(pixelated=True)
+        self.clock_text.draw()
+        self.balance_text.draw()
         self.current_fish_sprite.draw_hit_box()
         self.player_animation.draw_hit_box()
-
 
         # Draws the missed fish text once we miss a fish
         if self.show_missed_label:
@@ -182,11 +187,19 @@ class GameView(arcade.View):
                 self.player_animation.texture = self.anim.keyframes[0].texture
 
         # Tick timer, every tick add one there are 60 ticks in a second
-        self.day_timer += 1
         self.timer += 1
-        # Every 5 minutes or 18000 ticks trigger a new day with the trigger mob function
-        if self.day_timer % 400 == 0:
+        # Code for clock. Will fully comment later...
+        self.game_time_minutes += delta_time * self.clock_speed
+        self.game_time_minutes %= 1440
+        hours = int(self.game_time_minutes) // 60
+        minutes = int(self.game_time_minutes) % 60
+        am_pm = "AM" if hours < 12 else "PM"
+        display_hours = hours % 12 or 12
+        self.clock_text.text = f"Time: {display_hours:02}:{minutes:02} {am_pm}"
+        if hours == 0:
             self.new_day()
+            self.window.show_view(GameOverView(self.money_quota, self.balance))
+
         # If you miss a fish, this will allow a label to be drawn for only 1 second
         if self.show_missed_label:
             self.missed_ticks += 1
@@ -253,7 +266,8 @@ class GameView(arcade.View):
             if self.current_fish_sprite.center_y >= 420:
                 self.start_animate = True
                 self.fish_animation = False
-
+        # Currently this code is slightly broken and not optimized for all the fish... ex. rainbow trout 'stuck' on
+        # player for unknown reason. Also need to make exception for naval mine because that won't be launched out.
         if self.start_animate:
             # Gently override position to simulate float
             self.current_fish_sprite.center_y += math.sin(self.timer * 0.1) * 6
@@ -261,8 +275,8 @@ class GameView(arcade.View):
             if self.fish_timer == 180 and not self.fish_done:
                 self.fish_list.clear()
                 self.fish_timer = 0
-                self.money_quota -= self.current_fish_price
-                self.quota_text.text = f'Quota: {self.money_quota}'
+                self.balance += self.current_fish_price
+                self.balance_text.text = f'Money: {self.balance}'
                 self.fish_done = True
                 self.current_fish_sprite.position = 1500, -60
             self.start_animate = False
@@ -279,7 +293,7 @@ class GameView(arcade.View):
             print(self.fish)
             print(self.is_fishing)
             print(self.bobber_ticks)
-            game_view = GameOverView(self.money_quota)
+            game_view = GameOverView(self.money_quota, self.balance)
             self.window.show_view(game_view)
 
     def on_mouse_press(self, x, y, button, modifiers):
@@ -289,14 +303,12 @@ class GameView(arcade.View):
                     self.main_loop = False
                     self.is_fishing = True
                     self.is_animate = True
-                print(x,y)
 
     def new_day(self):
         # Every new day the quota goes up by 10$ and the counter increases while the timer resets
-        self.money_quota += 2500
+        self.money_quota += 50
         self.day += 1
         self.timer = 0
-
 
 class GameStartView(arcade.View):
     def __init__(self):
@@ -320,16 +332,28 @@ class GameStartView(arcade.View):
         if key == arcade.key.ESCAPE:
             pass
 
-
 class GameOverView(arcade.View):
-    def __init__(self, money_quota):
+    def __init__(self, money_quota, balance):
         super().__init__()
         self.money_quota = money_quota
+        self.balance = balance
+        self.count = 0
         self.background_texture = arcade.load_texture('assets/end_day_bg.png')
         self.background = arcade.Sprite(self.background_texture)
         self.background.position = WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2
-        self.quota_text = arcade.Text(f'{self.money_quota}', WINDOW_WIDTH//2, 300, arcade.color.GOLD_FUSION,
+        self.quota_text = arcade.Text(f'Quota: {self.count}', WINDOW_WIDTH//2, 300, arcade.color.GOLD,
                                       font_name='Pixeled')
+        self.failed = False
+        self.continue_day = False
+        self.manager = arcade.gui.UIManager()
+        self.manager.enable()
+        # Make sure to add fonts and other things later...
+        continue_button = arcade.gui.UIFlatButton(text="Next Day", width=200, x=WINDOW_WIDTH//2, y=200)
+        self.manager.add(continue_button)
+        @continue_button.event('on_click')
+        def on_click_settings(event):
+            game_view = GameView()
+            self.window.show_view(game_view)
 
     def setup(self):
         pass
@@ -338,16 +362,25 @@ class GameOverView(arcade.View):
         arcade.set_background_color(arcade.color.BLACK)
 
     def on_update(self, delta_time):
-        self.money_quota += 1
+        # If quota is completed, then count up the quota... counting the entire balance normally takes too long.
+        if self.balance >= self.money_quota > self.count:
+            self.count += 1
+            if self.count == self.money_quota:
+                self.continue_day = True
+        # If quota is not completed, count up the balance
+        elif self.count < self.balance < self.money_quota:
+            self.count += 1
+            self.failed = True
+        self.quota_text.text = f'Quota: {self.count}'
+
+
 
     def on_draw(self):
         self.clear()
         arcade.draw_sprite(self.background)
         self.quota_text.draw()
-
-    def on_mouse_press(self, x: int, y: int, button: int, modifiers: int) -> bool | None:
-        game_view = GameView()
-        self.window.show_view(game_view)
+        if self.continue_day:
+            self.manager.draw()
 
     def on_key_press(self, key, modifiers):
         if key == arcade.key.ESCAPE:
