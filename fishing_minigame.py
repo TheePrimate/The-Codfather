@@ -20,7 +20,6 @@ class FishingMiniGame(arcade.Window):
         self.indicator_change_speed_ticks = 0
         self.indicator_change_direction_ticks = 0
         self.mouse_hold = False
-        self.draw_fish = True
         self.choose_fish = True
         self.current_minigame = None
 

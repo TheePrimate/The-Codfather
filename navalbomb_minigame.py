@@ -9,7 +9,7 @@ class GameView(arcade.View):
         super().__init__()
 
         self.background_color = arcade.color.BLACK
-        self.fish = "mine"
+        self.current_minigame = "mine"
         self.mineX = 500
         self.mineY = 530
         self.handX = 500
@@ -91,7 +91,7 @@ class GameView(arcade.View):
         self.camera_sprites.use()
 
         # Call draw() on all your sprite lists below
-        if self.fish == "mine":
+        if self.current_minigame == "mine":
             self.mine_list.draw(pixelated=True)
             arcade.draw_lrbt_rectangle_filled(103, 165.4, 219, 219+self.sanity,
                                               arcade.color.AIR_SUPERIORITY_BLUE)
@@ -100,7 +100,7 @@ class GameView(arcade.View):
 
         self.camera_shake.readjust_camera()
 
-        if self.fish == "disarmed":
+        if self.current_minigame == "Disarmed":
             self.defusal_list.draw(pixelated=True)
             self.jeep_list.draw(pixelated=True)
 
@@ -109,7 +109,7 @@ class GameView(arcade.View):
             self.jeep_list.update_animation()
         self.camera_shake.update(delta_time)
         # If the naval mine mini-game is engaged execute the following
-        if self.fish == "mine":
+        if self.current_minigame == "mine":
             if self.should_init_mine:
                 self.should_init_mine = False
                 self.init_mine()
@@ -142,7 +142,7 @@ class GameView(arcade.View):
                 self.insanity_flag = False
                 self.camera_shake.start()
 
-        if self.fish == "disarmed":
+        if self.current_minigame == "Disarmed":
             if self.detonator_sprite.center_y > 250:
                 self.detonator_sprite.center_y -= 1
             else:
@@ -157,7 +157,7 @@ class GameView(arcade.View):
                 if self.jeep_tertiary_flag == 3:
                     self.jeep_list.pop()
                     self.jeep_flag = False
-                    self.fish = "None"
+                    self.current_minigame = "None"
                 if self.jeep_tertiary_flag == 2:
                     self.defusal_list.pop()
 
@@ -174,9 +174,9 @@ class GameView(arcade.View):
         self.jeep_secondary_flag = False
 
     def on_mouse_press(self, x, y, button, key_modifiers):
-        if self.fish == "mine":
+        if self.current_minigame == "mine":
             if 455 < self.hand_sprite.center_x < 500:
-                self.fish = "disarmed"
+                self.current_minigame = "Disarmed"
                 self.camera_shake.stop()
             elif (370 < self.hand_sprite.center_x < 400 or 600 < self.hand_sprite.center_x < 630 or 500 <
                   self.hand_sprite.center_x < 530):

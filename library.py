@@ -1,7 +1,10 @@
 import arcade
 import random
 from constants import *
+import arcade.gui
+from arcade.gui import UIManager, UITextureButton, UIDropdown, UISlider
 from numpy.random import choice
+import math
 
 FISH_LIST = ("Northern Pike", "Cod", "Rainbow Trout",
              "Sockeye Salmon", "Snoek",
@@ -21,5 +24,5 @@ fish_data = {
     "Dumbo Octopus": ["Fishing Minigame", 99999, DIFFICULTY_7_LOW, DIFFICULTY_8_HIGH, 20, "assets/dumbo_octopus.png", 1, 1],
     "Immortal Jellyfish": ["Fishing Minigame", 0.3, DIFFICULTY_7_LOW, DIFFICULTY_9_HIGH, 20, "assets/immortal_jellyfish.png", 8, 8],
     "Ancient Mariner's Albatross": ["Fishing Minigame", 553000, DIFFICULTY_10, DIFFICULTY_10, 20, "assets/albatross.png", 1, 1],
-    "Naval Bomb": ["Naval Bomb Minigame", 10000, None, None, 20, "assets/naval_bomb.png", 1, 1]
+    "Naval Bomb": ["Naval Bomb Minigame", 10000, None, None, None, "assets/naval_bomb.png", 1, 1]
 }
