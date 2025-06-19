@@ -276,6 +276,12 @@ class GameView(arcade.View):
         self.handY = 340
         self.jeep_secondary_flag = True
         self.jeep_tertiary_flag = 0
+        self.san_der = 0
+        self.san_accel = 0
+        self.blackout = 0
+        self.hand_vel = 5
+        self.insanity_flag = False
+        self.insanity_check_flag = True
 
     def setup(self):
         """Set up the game here. Call this function to restart the game."""
