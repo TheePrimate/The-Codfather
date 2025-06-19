@@ -3,8 +3,11 @@
 Instructions:
     1. Install python 3.13.4 from: https://www.python.org/downloads/release/python-3134/
     2. Install python packages: arcade 3.2.0 and numpy 2.3.0rc1
-    3. Run "game.py"
-    4. Have fun
+    3. Open assets\font.ttf in "Explorer"
+    4. Click on the icon
+    5. Install the font
+    6. Run "game.py"
+    7. Have fun
 
 Credits:
 Ryan Butcher
@@ -15,7 +18,7 @@ Kayden Zhao
 
 Art:
 All assets were drawn by either Ryan or
-Kayden with advice/directives NOT from Pearson
+Kayden with advice/directives from Pearson
 (See file commits for which assets were drawn by whom specifically)
 
 Honorable Mentions:

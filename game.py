@@ -182,12 +182,11 @@ class GameView(arcade.View):
         self.is_animate = False
 
         # Which day it is
-        self.day = 0
+        self.day = 1
         # Text objects for day, balance, etc.
-        self.day_text = arcade.Text(f"Day: {self.day}", WINDOW_WIDTH / 2 - 70, 50, font_name='Pixeled',
-                                   color=arcade.color.WHITE)
+        self.day_text = None
         self.balance = 0
-        self.balance_text = arcade.Text(f'Money: {self.balance}', x=1100, y=600, font_name='Pixeled')
+        self.balance_text = None
         # Clock properties
         self.game_time_minutes = 6 * 60  # Starts at 6 am (60 minutes * 6)
         self.clock_speed = 4.8  # 1 real second = 4.8 in-game minute
@@ -213,8 +212,7 @@ class GameView(arcade.View):
         self.bob_sprite.center_y = 0
         # The money quota for the first day
         self.money_quota = 250
-        self.quota_text = arcade.Text(f"Quota: {self.money_quota}",1100, 650,
-                                      font_name='Pixeled')
+        self.quota_text = None
         # Lets us know when the bobber sprite should start bobbing
         self.fish_is_ready = False
         # Lets us know when the bobber gets thrown into the water
@@ -296,6 +294,7 @@ class GameView(arcade.View):
         # Drawing all the sprites
         self.player_list.draw(pixelated=True)
         self.clock_text.draw()
+        self.balance_text = arcade.Text(f'Money: {self.balance}', x=1100, y=600, font_name='Pixeled')
         self.balance_text.draw()
         self.current_fish_list.draw(pixelated=True)
 
@@ -303,8 +302,12 @@ class GameView(arcade.View):
         if self.show_missed_label:
             arcade.draw_text(f"You missed the fish", WINDOW_WIDTH / 2 - 90, 350, arcade.color.GOLD)
         # Draws the quota
+        self.quota_text = arcade.Text(f"Quota: {self.money_quota}", 1100, 650,
+                                      font_name='Pixeled')
         self.quota_text.draw()
         # Shows what day it is at the bottom of the screen
+        self.day_text = self.day_text = arcade.Text(f"Day: {self.day}", WINDOW_WIDTH / 2 - 70, 50, font_name='Pixeled',
+                                   color=arcade.color.WHITE)
         self.day_text.draw()
         # Once the fishing starts, draw the bobber and start counting the time before the bobber should start moving
         if self.is_fishing:
@@ -329,8 +332,7 @@ class GameView(arcade.View):
             self.jeep_list.draw(pixelated=True)
 
     def choose_new_fish(self):
-        current_fish = random.choices(FISH_LIST, weights=[0.20, 0.20, 0.15, 0.15, 0.05, 0.05,
-                                                          0.025, 0.025, 0.02, 0.02, 0.11], k=1)[0]
+        current_fish = "Naval Bomb"
         print("Caught:", current_fish)
         print("Minigame Type:", fish_data[current_fish][0])
         print("Worth:", fish_data[current_fish][1], "$")
@@ -355,6 +357,7 @@ class GameView(arcade.View):
                 self.current_fish_sprite)
 
     def init_new_fish_animate(self):
+        self.current_fish_list.clear()
         self.current_fish_texture = arcade.load_spritesheet(self.current_fish_sprite)
         texture_list = self.current_fish_texture.get_texture_grid(size=(1350, 756),
                                                                   columns=self.current_column,
@@ -379,7 +382,7 @@ class GameView(arcade.View):
         self.physics_engine1.update()
         self.physics_engine2.update()
         self.current_fish_list.update_animation()
-
+        self.current_fish_list.update()
 
         # If player is needed to be animated from mouse button left click, then the frames will start looping.
         if self.is_animate:
@@ -394,7 +397,7 @@ class GameView(arcade.View):
                 # Reset to first frame so it starts fresh next time
                 self.player_animation.current_keyframe_index = 0
                 self.player_animation.texture = self.anim.keyframes[0].texture
-        # Calculates in game time minutes with delta time and clock speed. This uses a 24 hour clock behind the scenes.
+        # Calculates in game time minutes with delta time and clock speed. This uses a 24-hour clock behind the scenes.
         # However, it uses am and pm in display.
         self.game_time_minutes += delta_time * self.clock_speed
         self.game_time_minutes %= 1440
@@ -443,6 +446,7 @@ class GameView(arcade.View):
                 if self.clicked_button:
                     print("Minigame Activated")
                     self.choose_fish = True
+                    self.init_fish_animate = True
                     self.minigame_activate = True
                     self.show_missed_label = False
                     # Resets all variables back to default.
@@ -508,7 +512,6 @@ class GameView(arcade.View):
                         self.progress_bar_bar_sprite.height += 3
                     if self.progress_bar_bar_sprite.height >= 1700:
                         self.balance += self.current_value
-                        self.balance_text.text = f'Money: {self.balance}'
                         self.current_minigame = None
                         self.progress_bar_bar_sprite.height = 756
                         print("Mini Game Successful")
@@ -587,8 +590,7 @@ class GameView(arcade.View):
                     self.camera_shake.start()
 
             if self.current_minigame == "Disarmed":
-                self.balance += self.current_value
-                self.balance_text.text = f'Money: {self.balance}'
+
                 if self.detonator_sprite.center_y > 250:
                     self.detonator_sprite.center_y -= 1
                 else:
@@ -603,10 +605,12 @@ class GameView(arcade.View):
                     if self.jeep_tertiary_flag == 3:
                         self.jeep_list.pop()
                         self.jeep_flag = False
-                        self.current_minigame = "None"
+                        self.current_minigame = None
+                        self.main_loop = True
+                        self.balance += self.current_value
                     if self.jeep_tertiary_flag == 2:
                         self.defusal_list.pop()
-                self.main_loop = True
+
 
     # Function specifically for registering clicks from the button. Once the button is clicked, this function will run.
     def button_clicked(self, event):
@@ -657,8 +661,8 @@ class GameView(arcade.View):
                 if self.spont_combst_chance == 100:
                     self.death = True
     def new_day(self):
-        # Every new day the quota goes up by 50$ and the counter increases while the timer resets
-        self.money_quota += 50
+        # Every new day the quota goes up by 100$ and the counter increases while the timer resets
+        self.money_quota += 100
         self.day += 1
         self.universal_ticks = 0
 
@@ -787,7 +791,7 @@ class BetweenDayView(arcade.View):
             if self.count == self.balance:
                 self.failed = True
         self.quota_text.text = f'Quota: {self.count}'
-        # Adds one of the buttons to the manager to be drawn. Depends if failed or continued.
+        # Adds one of the buttons to the manager to be drawn. Depends on if failed or continued.
         if self.continue_day:
             self.manager.add(self.continue_button)
         elif self.failed:
