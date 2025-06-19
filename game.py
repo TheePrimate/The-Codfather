@@ -161,6 +161,7 @@ class GameView(arcade.View):
         # Create camera that will follow the player sprite.
         self.camera_sprites = arcade.Camera2D()
 
+        # Initialise camera shake
         self.camera_shake = arcade.camera.grips.ScreenShake2D(
             self.camera_sprites.view_data,
             max_amplitude=50.0,
@@ -260,15 +261,21 @@ class GameView(arcade.View):
 
         self.start_animate = False
         self.fish_done = False
-        self.sussy = False
     
     def init_mine(self):
+        """Initialises variables for the landmine disarming mini game whenever it is called"""
+        # Calculates realistic explosion chances, Amatol, the explosive used is volatile
         self.spont_combst_chance = random.randint(0, 101)
+        # If water leaks into the mine it becomes less volatile
         self.water_leaked = random.randint(1, 16)
         if self.water_leaked == 15:
             self.spont_combst_chance -= 50
+
+        # Death by spontaneous combustion
         if self.spont_combst_chance == 100:
             self.death = True
+
+        # Reset variables
         self.handY = 340
         self.jeep_secondary_flag = True
         self.jeep_tertiary_flag = 0
@@ -318,6 +325,7 @@ class GameView(arcade.View):
         if self.current_minigame == "Fishing Minigame" and self.minigame_activate is True:
             self.sprite_list.draw(pixelated=True)
 
+        # Begin drawing stuff for mine defusal minigame
         if self.current_minigame == "Naval Bomb Minigame" and self.minigame_activate is True:
             # when we integrate minigames draw minigame stuff here
             self.mine_list.draw(pixelated=True)
@@ -326,8 +334,10 @@ class GameView(arcade.View):
             # Draw insanity blackout
             arcade.draw_lrbt_rectangle_filled(0, WINDOW_WIDTH, 0, WINDOW_HEIGHT, color=(0, 0, 0, self.blackout))
 
+        # Have camera shake function at the ready
         self.camera_shake.readjust_camera()
 
+        # If the mine is disarmed, draw the appropriate sprites
         if self.current_minigame == "Disarmed":
             self.defusal_list.draw(pixelated=True)
             self.jeep_list.draw(pixelated=True)
@@ -500,9 +510,13 @@ class GameView(arcade.View):
                 self.animate_fish.position = 1500, -60
                 self.start_animate = False
 
+        # If the B&M team is there, update the animation
         if self.jeep_flag:
             self.jeep_list.update_animation()
+
+        # Update camera shake (nothing happens if not active)
         self.camera_shake.update(delta_time)
+        
         if self.minigame_activate is True:
             self.collision = arcade.check_for_collision(self.hook_sprite, self.indicator_sprite)
             if self.current_minigame == "Fishing Minigame":
@@ -555,8 +569,9 @@ class GameView(arcade.View):
                 else:
                     self.hook_sprite.change_y = -HOOK_MOVEMENT_SPEED
 
+            # Update naval mine minigame
             if self.current_minigame == "Naval Bomb Minigame":
-                # this is where naval bomb minigame will go
+                # Initialise the minigame
                 if self.should_init_mine:
                     self.should_init_mine = False
                     self.init_mine()
@@ -572,46 +587,65 @@ class GameView(arcade.View):
                 if not self.san_der:
                     self.hand_vel -= 1 + self.san_accel
 
+                # Actually move the hand
                 self.hand_sprite.center_x += self.hand_vel
 
-                # Sanity
+                # Sanity decreases, hand speed increases, screen gets darker
                 if self.sanity != 218.5:
                     self.sanity -= 0.5
                 self.san_accel += 0.005
                 if self.blackout < 254:
                     self.blackout += 0.3
 
+                # Prepare call for insanity, double layered since it is a one time call
                 if self.sanity <= 225 and self.insanity_check_flag:
                     self.insanity_check_flag = False
                     self.insanity_flag = True
 
-                # Go crazy
+                # Go crazy (camerashake)
                 if self.insanity_flag:
                     self.insanity_flag = False
                     self.camera_shake.start()
 
+            # Switch to begin animations for disarming the mine
             if self.current_minigame == "Disarmed":
 
+                # Hand with detonator moves down
                 if self.detonator_sprite.center_y > 250:
                     self.detonator_sprite.center_y -= 1
+
+                # Timer for priming one time call to B&M animation
                 else:
                     self.handY -= 1
+
+                # Call B&M animation
                 if self.handY == 300:
                     self.handY = 340
-                    self.detonator_sprite.alpha = 0
+
+                    # Remove detonator
+                    self.defusal_list.pop(0)
+
+                    # Call actual jeep animation
                     if self.jeep_secondary_flag:
                         self.init_b_and_m()
+
+                    # Run timer for jeep
                     self.jeep_flag = True
                     self.jeep_tertiary_flag += 1
+
+                    # Remove jeep when timer expires
                     if self.jeep_tertiary_flag == 3:
                         self.jeep_list.pop()
                         self.jeep_flag = False
+
+                        # Return to main loop
                         self.current_minigame = None
                         self.main_loop = True
                         self.balance += self.current_value
+                        self.balance_text.text = f'Money: {self.balance}'
+                        
                     if self.jeep_tertiary_flag == 2:
                         self.defusal_list.pop()
-
 
     # Function specifically for registering clicks from the button. Once the button is clicked, this function will run.
     def button_clicked(self, event):
@@ -629,6 +663,7 @@ class GameView(arcade.View):
             self.window.show_view(game_view)
 
     def init_b_and_m(self):
+        """Initialise animation for B&M team (Bomb and Mine)"""
         self.jeep_texture = arcade.load_spritesheet("assets/b_and_m.png")
         texture_list = self.jeep_texture.get_texture_grid(size=(1350, 756), columns=40, count=40)
         frames = []
@@ -650,17 +685,25 @@ class GameView(arcade.View):
                 self.is_fishing = True
                 self.is_animate = True
             self.mouse_hold = True
+
+            # Naval mine minigame
             if self.current_minigame == "Naval Bomb Minigame":
+                # Click on the detonator to remove it and disarm
                 if 455 < self.hand_sprite.center_x < 500:
                     self.current_minigame = "Disarmed"
                     self.camera_shake.stop()
+
+                # Click on contact plunger or ampules to set it off
                 elif (370 < self.hand_sprite.center_x < 400 or 600 < self.hand_sprite.center_x < 630 or 500 <
                       self.hand_sprite.center_x < 530):
                     self.death = True
+
+                # Click elsewhere and just disrupt the amatol
                 else:
                     self.spont_combst_chance += 30
                 if self.spont_combst_chance == 100:
                     self.death = True
+                    
     def new_day(self):
         # Every new day the quota goes up by 100$ and the counter increases while the timer resets
         self.money_quota += 100
