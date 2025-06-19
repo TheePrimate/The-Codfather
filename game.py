@@ -260,7 +260,8 @@ class GameView(arcade.View):
 
         self.start_animate = False
         self.fish_done = False
-        
+        self.sussy = False
+    
     def init_mine(self):
         self.spont_combst_chance = random.randint(0, 101)
         self.water_leaked = random.randint(1, 16)
