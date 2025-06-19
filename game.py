@@ -190,7 +190,7 @@ class GameView(arcade.View):
         self.balance_text = None
         # Clock properties
         self.game_time_minutes = 6 * 60  # Starts at 6 am (60 minutes * 6)
-        self.clock_speed = 100 # 1 real second = 12 in-game minute = 2 real time minute day
+        self.clock_speed = 12 # 1 real second = 12 in-game minute = 2 real time minute day
         self.clock_text = arcade.Text('', x=1100, y=700, font_name='Pixeled')
         # How much money we have
         self.money = 0
@@ -343,7 +343,8 @@ class GameView(arcade.View):
             self.jeep_list.draw(pixelated=True)
 
     def choose_new_fish(self):
-        current_fish = "Naval Bomb"
+        current_fish = random.choices(FISH_LIST, weights=[0.20, 0.20, 0.15, 0.15, 0.05, 0.05,
+                                                          0.025, 0.025, 0.02, 0.02, 0.11], k=1)[0]
         self.current_minigame = fish_data[current_fish][0]
         self.current_value = fish_data[current_fish][1]
         self.current_difficulty_low = fish_data[current_fish][2]
@@ -506,6 +507,9 @@ class GameView(arcade.View):
         if self.jeep_flag:
             self.jeep_list.update_animation()
 
+        if self.death:
+            self.window.show_view(DeathScreen())
+
         # Fishing Minigame
         if self.minigame_activate is True:
             # Checks if the hook and the bar are overlapping or not
@@ -642,9 +646,6 @@ class GameView(arcade.View):
                     if self.jeep_tertiary_flag == 2:
                         if len(self.defusal_list) > 0:
                             self.defusal_list.pop()
-
-            if self.death:
-                self.window.show_view(DeathScreen())
 
     # Function specifically for registering clicks from the button. Once the button is clicked, this function will run.
     def button_clicked(self, event):
