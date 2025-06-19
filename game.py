@@ -291,6 +291,10 @@ class GameView(arcade.View):
         # frame of the game.
         self.clear()
 
+        # Have camera shake function at the ready
+        self.camera_shake.update_camera()
+        self.camera_sprites.use()
+
         self.background_list.draw()
         # Draws all the gui such as the button.
         self.manager.draw()
@@ -330,7 +334,7 @@ class GameView(arcade.View):
             # Draw insanity blackout
             arcade.draw_lrbt_rectangle_filled(0, WINDOW_WIDTH, 0, WINDOW_HEIGHT, color=(0, 0, 0, self.blackout))
 
-        # Have camera shake function at the ready
+        # Inform the camera shake function of any new sprites
         self.camera_shake.readjust_camera()
 
         # If the mine is disarmed, draw the appropriate sprites
@@ -372,6 +376,9 @@ class GameView(arcade.View):
         self.init_fish_animate = False
 
     def on_update(self, delta_time):
+        # Update camera shake (nothing happens if not active)
+        self.camera_shake.update(delta_time)
+
         if self.choose_fish is True:
             self.choose_new_fish()
         if self.init_fish_animate is True:
@@ -500,9 +507,6 @@ class GameView(arcade.View):
         if self.jeep_flag:
             self.jeep_list.update_animation()
 
-        # Update camera shake (nothing happens if not active)
-        self.camera_shake.update(delta_time)
-
         # Fishing Minigame
         if self.minigame_activate is True:
             # Checks if the hook and the bar are overlapping or not
@@ -580,8 +584,10 @@ class GameView(arcade.View):
                 self.hand_sprite.center_x += self.hand_vel
 
                 # Sanity decreases, hand speed increases, screen gets darker
-                if self.sanity != 218.5:
+                if self.sanity > 0:
                     self.sanity -= 0.5
+                else:
+                    self.death = True
                 self.san_accel += 0.005
                 if self.blackout < 254:
                     self.blackout += 0.3
@@ -612,7 +618,8 @@ class GameView(arcade.View):
                     self.handY = 340
 
                     # Remove detonator
-                    self.defusal_list.clear()
+                    if len(self.defusal_list) > 0:
+                        self.defusal_list.pop(0)
 
                     # Call actual jeep animation
                     if self.jeep_secondary_flag:
@@ -634,7 +641,8 @@ class GameView(arcade.View):
                         self.balance_text.text = f'Money: {self.balance}'
                         
                     if self.jeep_tertiary_flag == 2:
-                        self.defusal_list.clear()
+                        if len(self.defusal_list) > 0:
+                            self.defusal_list.pop()
 
             if self.death:
                 self.window.show_view(DeathScreen())
