@@ -355,6 +355,7 @@ class GameView(arcade.View):
                 self.current_fish_sprite)
 
     def init_new_fish_animate(self):
+        self.current_fish_list.clear()
         self.current_fish_texture = arcade.load_spritesheet(self.current_fish_sprite)
         texture_list = self.current_fish_texture.get_texture_grid(size=(1350, 756),
                                                                   columns=self.current_column,
@@ -364,7 +365,7 @@ class GameView(arcade.View):
             frames.append(arcade.TextureKeyframe(tex))
         anim = arcade.TextureAnimation(frames)
         self.animate_fish = arcade.TextureAnimationSprite(animation=anim)
-        self.animate_fish.position = 1550, -105
+        self.animate_fish.position = 500, 500
         self.current_fish_list.append(self.animate_fish)
         self.init_fish_animate = False
 
@@ -379,6 +380,7 @@ class GameView(arcade.View):
         self.physics_engine1.update()
         self.physics_engine2.update()
         self.current_fish_list.update_animation()
+        self.current_fish_list.update()
 
         # Physics engine will update if fish needs to move.
         if self.fish_animation:
@@ -445,6 +447,7 @@ class GameView(arcade.View):
                 if self.clicked_button:
                     print("Minigame Activated")
                     self.choose_fish = True
+                    self.init_fish_animate= True
                     self.minigame_activate = True
                     self.fish_animation = True
                     self.show_missed_label = False
@@ -470,7 +473,7 @@ class GameView(arcade.View):
         # Fish animation (changes y and x)
         if self.fish_animation and self.fish_variable == 0:
             self.fish_variable = 1
-            self.animate_fish.change_x = -10
+            #self.animate_fish.change_x = -10
 
         if 950 > self.animate_fish.center_x > 720:
             if self.animate_fish.center_y >= 420:
