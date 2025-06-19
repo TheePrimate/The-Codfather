@@ -1,7 +1,8 @@
 # Main game loop goes here
 import arcade
 import arcade.gui
-from arcade.gui import UIManager, UITextureButton, UIDropdown, UISlider
+from arcade.gui import UIManager, UITextureButton
+from arcade import uicolor
 
 # from constants import *
 from library import *
@@ -35,12 +36,12 @@ class GameView(arcade.View):
         self.day = 0
         # TBD if this shows up all day or only when the day starts and between the days?
         self.day_text = arcade.Text(f"Day: {self.day}", WINDOW_WIDTH/2-70, 50, font_name='Pixeled',
-                                    font_size=20, color=arcade.color.WHITE)
+                                    color=arcade.color.WHITE)
         self.game_time_minutes = 6 * 60
         self.clock_speed = 4.8 # 1 real second = 4.8 in-game minute
-        self.clock_text = arcade.Text('', x=100, y=600, font_size=20, font_name='Pixeled')
+        self.clock_text = arcade.Text('', x=1100, y=700, font_name='Pixeled')
         self.balance = 0
-        self.balance_text = arcade.Text(f'Money: {self.balance}', x=1000, y=700, font_name='Pixeled', font_size=20)
+        self.balance_text = arcade.Text(f'Money: {self.balance}', x=1100, y=600, font_name='Pixeled')
         # How much money we have
         self.money = 0
         # All the mini timers that are needed to keep track of certain variables
@@ -59,13 +60,12 @@ class GameView(arcade.View):
         # Sets the position of the background image
         self.background_sprite.center_x = WINDOW_WIDTH / 2
         self.background_sprite.center_y = WINDOW_HEIGHT / 2
-
         # Sets the position of the bobber sprite
         self.bob_sprite.center_x = 1160
         self.bob_sprite.center_y = 0
         # The money quota for the first day
         self.money_quota = 250
-        self.quota_text = arcade.Text(f"Quota: {self.money_quota}", WINDOW_WIDTH/2-180, 700,
+        self.quota_text = arcade.Text(f"Quota: {self.money_quota}", 1100, 650,
                                       font_name='Pixeled')
         # Lets us know when the bobber sprite should start bobbing
         self.fish_is_ready = False
@@ -101,10 +101,10 @@ class GameView(arcade.View):
         self.player_texture = arcade.load_spritesheet("assets/fisherman.png")
         # Block of code that creates an animation (for player). Creates a texture list and adds all the frames to this
         # list. Then creates the sprite using a function.
-        texture_list = self.player_texture.get_texture_grid(size=(1350, 756), columns=40, count=40)
+        texture_list = self.player_texture.get_texture_grid(size=(1350, 756), columns=8, count=8)
         frames = []
         for text in texture_list:
-            frames.append(arcade.TextureKeyframe(text, duration=50))
+            frames.append(arcade.TextureKeyframe(text, duration=200))
         self.anim = arcade.TextureAnimation(frames)
         self.player_animation = arcade.TextureAnimationSprite(675, 375, animation=self.anim)
         self.player_list.append(self.player_animation)
@@ -197,8 +197,7 @@ class GameView(arcade.View):
         display_hours = hours % 12 or 12
         self.clock_text.text = f"Time: {display_hours:02}:{minutes:02} {am_pm}"
         if hours == 0:
-            self.new_day()
-            self.window.show_view(GameOverView(self.money_quota, self.balance))
+            self.window.show_view(BetweenDayView(self.money_quota, self.balance, self.day))
 
         # If you miss a fish, this will allow a label to be drawn for only 1 second
         if self.show_missed_label:
@@ -225,7 +224,6 @@ class GameView(arcade.View):
             self.bob_sprite.angle = math.sin(self.timer * 0.1) * 1
             self.fish_ticks += 1
             self.button.visible = True
-
             if self.fish_is_ready:
                 self.fish_ticks += 1
                 self.button.visible = True
@@ -259,11 +257,11 @@ class GameView(arcade.View):
         # Fish animation (changes y and x)
         if self.fish_animation and self.fish_variable == 0:
             self.fish_variable = 1
-            self.physics_engine.jump(40)
-            self.current_fish_sprite.change_x = -10
+            self.physics_engine.jump(42)
+            self.current_fish_sprite.change_x = -9.5
 
-        if 950 > self.current_fish_sprite.center_x > 720:
-            if self.current_fish_sprite.center_y >= 420:
+        if 969 > self.current_fish_sprite.center_x > 784:
+            if self.current_fish_sprite.center_y >= 430:
                 self.start_animate = True
                 self.fish_animation = False
         # Currently this code is slightly broken and not optimized for all the fish... ex. rainbow trout 'stuck' on
@@ -272,7 +270,7 @@ class GameView(arcade.View):
             # Gently override position to simulate float
             self.current_fish_sprite.center_y += math.sin(self.timer * 0.1) * 6
             self.fish_timer += 1
-            if self.fish_timer == 180 and not self.fish_done:
+            if self.fish_timer == 150 and not self.fish_done:
                 self.fish_list.clear()
                 self.fish_timer = 0
                 self.balance += self.current_fish_price
@@ -280,6 +278,7 @@ class GameView(arcade.View):
                 self.fish_done = True
                 self.current_fish_sprite.position = 1500, -60
             self.start_animate = False
+            self.fish_variable = 0
 
     # Function specifically for registering clicks from the button. Once the button is clicked, this function will run.
     def button_clicked(self, event):
@@ -289,11 +288,7 @@ class GameView(arcade.View):
     def on_key_press(self, key, modifiers):
         """Called whenever a key is pressed."""
         if key == arcade.key.SPACE:
-            print(self.timer)
-            print(self.fish)
-            print(self.is_fishing)
-            print(self.bobber_ticks)
-            game_view = GameOverView(self.money_quota, self.balance)
+            game_view = BetweenDayView(self.money_quota, self.balance, self.day)
             self.window.show_view(game_view)
 
     def on_mouse_press(self, x, y, button, modifiers):
@@ -303,65 +298,121 @@ class GameView(arcade.View):
                     self.main_loop = False
                     self.is_fishing = True
                     self.is_animate = True
+            print(x,y)
 
     def new_day(self):
         # Every new day the quota goes up by 10$ and the counter increases while the timer resets
         self.money_quota += 50
+        self.quota_text.text = f"Quota: {self.money_quota}"
         self.day += 1
+        self.day_text.text = f'Day: {self.day}'
+        self.balance = 0
+        self.balance_text.text = f'Money: {self.balance}'
         self.timer = 0
 
 class GameStartView(arcade.View):
     def __init__(self):
         super().__init__()
+        self.background_texture = arcade.load_texture('assets/start_screen.png')
+        self.background = arcade.Sprite(self.background_texture)
+        self.background.position = WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2
+        self.manager = arcade.gui.UIManager()
+        self.manager.enable()
+        button_style = {
+            "normal": {
+                'font_name': 'Pixeled',
+                'font_color': arcade.color.WHITE,
+                'bg': uicolor.DARK_BLUE_MIDNIGHT_BLUE
+            },
+            'hover': {
+                'font_name': 'Pixeled',
+                'font_color': uicolor.DARK_BLUE_MIDNIGHT_BLUE,
+                'bg': uicolor.WHITE_CLOUDS
+            },
+            'press': {
+                'font_name': 'Pixeled',
+                'font_color': arcade.color.WHITE,
+                'bg': uicolor.DARK_BLUE_MIDNIGHT_BLUE
+            }
+        }
+        start_button = arcade.gui.UIFlatButton(text="Start", width=200, x=WINDOW_WIDTH // 2-70,
+                                                  y=WINDOW_HEIGHT // 2-65,
+                                                  style=button_style)
+        self.manager.add(start_button)
+
+        @start_button.event('on_click')
+        def on_click_settings(event):
+            self.window.show_view(GameView())
 
     def setup(self):
         pass
 
-    def on_show_view(self):
-        arcade.set_background_color(arcade.color.BLACK)
-
     def on_draw(self):
         self.clear()
-        arcade.draw_text("Start Screen", 100, 300, arcade.color.WHITE, 30)
+        arcade.draw_sprite(self.background)
+        self.manager.draw()
 
-    def on_mouse_press(self, x: int, y: int, button: int, modifiers: int) -> bool | None:
-        game_view = GameView()
-        self.window.show_view(game_view)
 
-    def on_key_press(self, key, modifiers):
-        if key == arcade.key.ESCAPE:
-            pass
-
-class GameOverView(arcade.View):
-    def __init__(self, money_quota, balance):
+class BetweenDayView(arcade.View):
+    def __init__(self, money_quota, balance, day):
         super().__init__()
         self.money_quota = money_quota
         self.balance = balance
+        self.day = day
         self.count = 0
         self.background_texture = arcade.load_texture('assets/end_day_bg.png')
         self.background = arcade.Sprite(self.background_texture)
         self.background.position = WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2
-        self.quota_text = arcade.Text(f'Quota: {self.count}', WINDOW_WIDTH//2, 300, arcade.color.GOLD,
+        self.quota_text = arcade.Text(f'Quota: {self.count}', WINDOW_WIDTH//2-75, 300, arcade.color.GOLD,
                                       font_name='Pixeled')
+        self.day_text = arcade.Text(f'Day: {self.day}', WINDOW_WIDTH//2-50, 700, arcade.color.WHITE,
+                                    font_name='Pixeled', font_size=20)
         self.failed = False
         self.continue_day = False
         self.manager = arcade.gui.UIManager()
         self.manager.enable()
+        self.main_window = GameView()
         # Make sure to add fonts and other things later...
-        continue_button = arcade.gui.UIFlatButton(text="Next Day", width=200, x=WINDOW_WIDTH//2, y=200)
-        self.manager.add(continue_button)
-        @continue_button.event('on_click')
-        def on_click_settings(event):
-            game_view = GameView()
-            self.window.show_view(game_view)
+        # Define styles for different button states
+        button_style = {
+            "normal": {
+                'font_name': 'Pixeled',
+                'font_color': arcade.color.WHITE,
+                'bg': uicolor.DARK_BLUE_MIDNIGHT_BLUE
+            },
+            'hover': {
+                'font_name' : 'Pixeled',
+                'font_color': uicolor.DARK_BLUE_MIDNIGHT_BLUE,
+                'bg': uicolor.WHITE_CLOUDS
+            },
+            'press': {
+                'font_name': 'Pixeled',
+                'font_color': arcade.color.WHITE,
+                'bg': uicolor.DARK_BLUE_MIDNIGHT_BLUE
+            }
+        }
+        self.continue_button = arcade.gui.UIFlatButton(text="Next Day", width=200, x=WINDOW_WIDTH//2-100, y=WINDOW_HEIGHT//2,
+                                                  style=button_style)
+        self.failed_button = arcade.gui.UIFlatButton(text="Back to Menu", width=200, x=WINDOW_WIDTH//2-100,
+                                                                  y=WINDOW_HEIGHT//2, style=button_style)
+
+        self.failed_button.on_click = self.clicked_failed_button
+        self.continue_button.on_click = self.clicked_continue_button
+
+    def clicked_failed_button(self, event):
+        self.window.show_view(GameStartView())
+        self.manager.remove(self.failed_button)
+        self.failed = False
+    def clicked_continue_button(self, event):
+        self.main_window.new_day()
+        self.window.show_view(self.main_window)
+        self.manager.remove(self.continue_button)
+        self.continue_day = False
 
     def setup(self):
         pass
 
-    def on_show_view(self):
-        arcade.set_background_color(arcade.color.BLACK)
-
-    def on_update(self, delta_time):
+    def on_update(self, delta_time: float):
         # If quota is completed, then count up the quota... counting the entire balance normally takes too long.
         if self.balance >= self.money_quota > self.count:
             self.count += 1
@@ -370,22 +421,21 @@ class GameOverView(arcade.View):
         # If quota is not completed, count up the balance
         elif self.count < self.balance < self.money_quota:
             self.count += 1
-            self.failed = True
+            if self.count == self.balance:
+                self.failed = True
         self.quota_text.text = f'Quota: {self.count}'
-
-
+        if self.continue_day:
+            self.manager.add(self.continue_button)
+        elif self.failed:
+            self.manager.add(self.failed_button)
 
     def on_draw(self):
         self.clear()
         arcade.draw_sprite(self.background)
         self.quota_text.draw()
-        if self.continue_day:
+        self.day_text.draw()
+        if self.continue_day or self.failed:
             self.manager.draw()
-
-    def on_key_press(self, key, modifiers):
-        if key == arcade.key.ESCAPE:
-            game_view = GameStartView()
-            self.window.show_view(game_view)
 
 def main():
    """Main function"""
