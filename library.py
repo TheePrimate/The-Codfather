@@ -1,10 +1,12 @@
 import arcade
 import random
 from constants import *
-import arcade.gui
-from arcade.gui import UIManager, UITextureButton, UIDropdown, UISlider
 from numpy.random import choice
+import arcade.gui
+from arcade.gui import UIManager, UITextureButton
+from arcade import uicolor
 import math
+
 
 FISH_LIST = ("Northern Pike", "Cod", "Rainbow Trout",
              "Sockeye Salmon", "Snoek",

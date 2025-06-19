@@ -1,8 +1,4 @@
 from library import *
-import arcade.gui
-from arcade.gui import UIManager, UITextureButton
-from arcade import uicolor
-import math
 
 class GameView(arcade.View):
     """
