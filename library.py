@@ -1,7 +1,6 @@
 import arcade
 import random
 from constants import *
-from numpy.random import choice
 import arcade.gui
 from arcade.gui import UIManager, UITextureButton
 from arcade import uicolor
@@ -14,7 +13,6 @@ FISH_LIST = ("Northern Pike", "Cod", "Rainbow Trout",
              "Ancient Mariner's Albatross", "Naval Bomb")
 
 # Minigame type, Dollars, lower-bound difficulty, higher-bound difficulty, time limit, sprite name, column, count
-
 fish_data = {
     "Northern Pike": ["Fishing Minigame", 100, DIFFICULTY_10, DIFFICULTY_10, 20, "assets/northern_pike.png", 1, 1],
     "Cod": ["Fishing Minigame", 150, DIFFICULTY_7_LOW, DIFFICULTY_9_HIGH, 20, "assets/codfish.png", 1, 1],

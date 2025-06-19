@@ -279,11 +279,6 @@ class GameView(arcade.View):
         self.insanity_flag = False
         self.insanity_check_flag = True
 
-    def setup(self):
-        """Set up the game here. Call this function to restart the game."""
-
-        pass
-
     def on_draw(self):
         """Render the screen."""
 
@@ -345,8 +340,7 @@ class GameView(arcade.View):
             self.jeep_list.draw(pixelated=True)
 
     def choose_new_fish(self):
-        current_fish = random.choices(FISH_LIST, weights=[0.20, 0.20, 0.15, 0.15, 0.05, 0.05,
-                                                          0.025, 0.025, 0.02, 0.02, 0.11], k=1)[0]
+        current_fish = "Naval Bomb"
         self.current_minigame = fish_data[current_fish][0]
         self.current_value = fish_data[current_fish][1]
         self.current_difficulty_low = fish_data[current_fish][2]
@@ -633,9 +627,13 @@ class GameView(arcade.View):
                     # Run timer for jeep
                     self.jeep_flag = True
                     self.jeep_tertiary_flag += 1
+                        
+                    if self.jeep_tertiary_flag == 2:
+                        if len(self.defusal_list) > 0:
+                            self.defusal_list.pop()
 
                     # Remove jeep when timer expires
-                    if self.jeep_tertiary_flag == 3:
+                    elif self.jeep_tertiary_flag == 3:
                         self.jeep_list.clear()
                         self.jeep_flag = False
 
@@ -644,10 +642,6 @@ class GameView(arcade.View):
                         self.main_loop = True
                         self.balance += self.current_value
                         self.balance_text.text = f'Money: {self.balance}'
-                        
-                    if self.jeep_tertiary_flag == 2:
-                        if len(self.defusal_list) > 0:
-                            self.defusal_list.pop()
 
     # Function specifically for registering clicks from the button. Once the button is clicked, this function will run.
     def button_clicked(self, event):
