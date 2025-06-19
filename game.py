@@ -246,7 +246,7 @@ class GameView(arcade.View):
         self.player_texture = arcade.load_spritesheet("assets/fisherman.png")
         # Block of code that creates an animation (for player). Creates a texture list and adds all the frames to this
         # list. Then creates the sprite using a function.
-        texture_list = self.player_texture.get_texture_grid(size=(1350, 756), columns=40, count=40)
+        texture_list = self.player_texture.get_texture_grid(size=(1350, 756), columns=8, count=8)
         frames = []
         for text in texture_list:
             frames.append(arcade.TextureKeyframe(text, duration=50))
