@@ -111,7 +111,6 @@ class FishingMiniGame(arcade.Window):
         self.current_count = None
 
         self.background_color = arcade.color.BLACK
-        self.current_minigame = "mine"
         self.mineX = 500
         self.mineY = 530
         self.handX = 500
@@ -215,7 +214,8 @@ class FishingMiniGame(arcade.Window):
             self.jeep_list.draw(pixelated=True)
 
     def choose_new_fish(self):
-        current_fish = "Naval Bomb"
+        current_fish = random.choices(FISH_LIST, weights=[0.20, 0.20, 0.15, 0.15, 0.05, 0.05,
+                                                          0.025, 0.025, 0.02, 0.02, 0.11], k=1)[0]
         print("Caught:", current_fish)
         print("Minigame Type:", fish_data[current_fish][0])
         print("Worth:", fish_data[current_fish][1], "$")
