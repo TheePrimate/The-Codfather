@@ -409,7 +409,7 @@ class GameView(arcade.View):
         display_hours = hours % 12 or 12
         self.clock_text.text = f"Time: {display_hours:02}:{minutes:02} {am_pm}"
         # Switches view to the BetweenDayView() when time reaches 24:00 or 12am.(start of a new day).
-        if hours == 0:
+        if hours == 0 and not self.is_fishing and not self.minigame_activate:
             self.new_day()
             self.window.show_view(BetweenDayView(self.money_quota, self.balance, self.day))
         # If you miss a fish, this will allow a label to be drawn for only 1 second
