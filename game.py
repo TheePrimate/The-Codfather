@@ -190,7 +190,7 @@ class GameView(arcade.View):
         self.balance_text = None
         # Clock properties
         self.game_time_minutes = 6 * 60  # Starts at 6 am (60 minutes * 6)
-        self.clock_speed = 4.8  # 1 real second = 4.8 in-game minute
+        self.clock_speed = 12 # 1 real second = 12 in-game minute = 2 real time minute day
         self.clock_text = arcade.Text('', x=1100, y=700, font_name='Pixeled')
         # How much money we have
         self.money = 0
@@ -205,9 +205,6 @@ class GameView(arcade.View):
         self.missed_ticks = 0
         # This timer is for the bobbing animation to happen
         self.change_ticks = 0
-        # This shows how many seconds are needed before a fish pops up
-        self.fish = random.randint(180, 300)
-
         # Sets the position of the bobber sprite
         self.bob_sprite.center_x = 1160
         self.bob_sprite.center_y = 0
@@ -294,7 +291,6 @@ class GameView(arcade.View):
         # frame of the game.
         self.clear()
 
-
         self.background_list.draw()
         # Draws all the gui such as the button.
         self.manager.draw()
@@ -344,13 +340,6 @@ class GameView(arcade.View):
 
     def choose_new_fish(self):
         current_fish = "Naval Bomb"
-        print("Caught:", current_fish)
-        print("Minigame Type:", fish_data[current_fish][0])
-        print("Worth:", fish_data[current_fish][1], "$")
-        print("Lower-Bound Diff:", fish_data[current_fish][2])
-        print("Upper-Bound Diff:", fish_data[current_fish][3])
-        print("Time Limit:", fish_data[current_fish][4])
-        print("Sprite Name:", fish_data[current_fish][5])
         self.current_minigame = fish_data[current_fish][0]
         self.current_value = fish_data[current_fish][1]
         self.current_difficulty_low = fish_data[current_fish][2]
@@ -449,13 +438,10 @@ class GameView(arcade.View):
             self.fish_ticks += 1
             self.button.visible = True
 
-            self.fish_ticks += 1
-            self.button.visible = True
             # Has three seconds to click button
             if self.fish_ticks < 240:
                 # Button is clicked within time limit
                 if self.clicked_button:
-                    print("Minigame Activated")
                     self.choose_fish = True
                     self.init_fish_animate = True
                     self.minigame_activate = True
@@ -516,54 +502,57 @@ class GameView(arcade.View):
 
         # Update camera shake (nothing happens if not active)
         self.camera_shake.update(delta_time)
-        
+
+        # Fishing Minigame
         if self.minigame_activate is True:
+            # Checks if the hook and the bar are overlapping or not
             self.collision = arcade.check_for_collision(self.hook_sprite, self.indicator_sprite)
             if self.current_minigame == "Fishing Minigame":
                 if self.collision is True:
+                    # If it's colliding, count ticks to track how long it's been overlapping for
                     self.fishing_ticks += 1
+                    # Increase the progress bar as well
                     if self.progress_bar_bar_sprite.height < 1700:
                         self.progress_bar_bar_sprite.bottom = 235
                         self.progress_bar_bar_sprite.height += 3
+                    # If the progress bar is completed, fish has been caught
                     if self.progress_bar_bar_sprite.height >= 1700:
                         self.balance += self.current_value
                         self.current_minigame = None
                         self.progress_bar_bar_sprite.height = 756
-                        print("Mini Game Successful")
                         self.fish_animation = True
                         self.main_loop = True
                     if self.fishing_ticks % TICK_RATE == 0:
                         self.fishing_seconds += 1
-                        print("Progress:", self.fishing_seconds)
                 else:
+                    # When the bar and hook are not overlapping, count losing seconds.
                     if self.progress_bar_bar_sprite.height > 0:
                         self.progress_bar_bar_sprite.bottom = 235
                         self.progress_bar_bar_sprite.height -= 3
                         if self.universal_ticks % TICK_RATE == 0:
                             self.indicator_seconds += 1
-                            print("Losing:", self.indicator_seconds)
+                            # Stops the minigame if player runs out of time
                             if self.indicator_seconds == self.current_time_limit:
                                 self.current_minigame = None
                                 self.main_loop = True
                                 self.progress_bar_bar_sprite.height = 756
-                                print("Mini Game Failed")
+                        # Also fails if the bar reaches 0
                         if self.progress_bar_bar_sprite.height == 0:
                             self.current_minigame = None
                             self.main_loop = True
                             self.progress_bar_bar_sprite.height = 756
-                            print('Mini Game Failed')
+                # Randomized indicators for the bar to move up and down randomly
                 self.indicator_change_direction = random.randint(0, 1)
                 self.indicator_change_speed_ticks = random.randint(1, 2) * TICK_RATE
                 self.indicator_change_direction_ticks = random.randint(1, 2) * TICK_RATE
-
+                # Moves bar up and down based on the difficulty
                 if self.universal_ticks % self.indicator_change_speed_ticks == 0:
                     self.indicator_sprite.change_y = random.randint(self.current_difficulty_low,
                                                                     self.current_difficulty_high)
-
                 if self.universal_ticks % self.indicator_change_direction_ticks == 0:
                     if self.indicator_change_direction == 1:
                         self.indicator_sprite.change_y = -self.indicator_sprite.change_y
-
+                # Hook movement
                 if self.mouse_hold:
                     self.hook_sprite.change_y = HOOK_MOVEMENT_SPEED
                 else:
@@ -623,7 +612,7 @@ class GameView(arcade.View):
                     self.handY = 340
 
                     # Remove detonator
-                    self.defusal_list.pop(0)
+                    self.defusal_list.clear()
 
                     # Call actual jeep animation
                     if self.jeep_secondary_flag:
@@ -635,7 +624,7 @@ class GameView(arcade.View):
 
                     # Remove jeep when timer expires
                     if self.jeep_tertiary_flag == 3:
-                        self.jeep_list.pop()
+                        self.jeep_list.clear()
                         self.jeep_flag = False
 
                         # Return to main loop
@@ -645,22 +634,15 @@ class GameView(arcade.View):
                         self.balance_text.text = f'Money: {self.balance}'
                         
                     if self.jeep_tertiary_flag == 2:
-                        self.defusal_list.pop()
+                        self.defusal_list.clear()
+
+            if self.death:
+                self.window.show_view(DeathScreen())
 
     # Function specifically for registering clicks from the button. Once the button is clicked, this function will run.
     def button_clicked(self, event):
         if self.fish_is_ready:
             self.clicked_button = True
-
-    def on_key_press(self, key, modifiers):
-        """Called whenever a key is pressed."""
-        if key == arcade.key.SPACE:
-            print(self.universal_ticks)
-            print(self.fish)
-            print(self.is_fishing)
-            print(self.bobber_ticks)
-            game_view = BetweenDayView(self.money_quota, self.balance, self.day)
-            self.window.show_view(game_view)
 
     def init_b_and_m(self):
         """Initialise animation for B&M team (Bomb and Mine)"""
@@ -697,7 +679,6 @@ class GameView(arcade.View):
                 elif (370 < self.hand_sprite.center_x < 400 or 600 < self.hand_sprite.center_x < 630 or 500 <
                       self.hand_sprite.center_x < 530):
                     self.death = True
-
                 # Click elsewhere and just disrupt the amatol
                 else:
                     self.spont_combst_chance += 30
@@ -760,6 +741,50 @@ class GameStartView(arcade.View):
         arcade.draw_sprite(self.background)
         self.manager.draw()
 
+# Death Screen when exploded.
+class DeathScreen(arcade.View):
+    def __init__(self):
+        super().__init__()
+        # Message as a background and manager
+        self.message_texture = arcade.load_texture('assets/death_title.png')
+        self.message = arcade.Sprite(self.message_texture)
+        self.message.position = WINDOW_WIDTH//2, WINDOW_HEIGHT // 2
+        self.manager = arcade.gui.UIManager()
+        self.manager.enable()
+
+        # Define styles for different button states.
+        button_style = {
+            "normal": {
+                'font_name': 'Pixeled',
+                'font_color': arcade.color.WHITE,
+                'bg': uicolor.DARK_BLUE_MIDNIGHT_BLUE
+            },
+            'hover': {
+                'font_name': 'Pixeled',
+                'font_color': uicolor.DARK_BLUE_MIDNIGHT_BLUE,
+                'bg': uicolor.WHITE_CLOUDS
+            },
+            'press': {
+                'font_name': 'Pixeled',
+                'font_color': arcade.color.WHITE,
+                'bg': uicolor.DARK_BLUE_MIDNIGHT_BLUE
+            }
+        }
+        # Button for menu
+        button = arcade.gui.UIFlatButton(text="Back to Menu", width=200, x=WINDOW_WIDTH // 2-100,
+                                                       y=WINDOW_HEIGHT // 2 - 100,
+                                                       style=button_style)
+        self.manager.add(button)
+        # Returns to start screen
+        @button.event('on_click')
+        def on_click_settings(event):
+            self.window.show_view(GameStartView())
+
+    def on_draw(self):
+        self.clear()
+        # Draws
+        arcade.draw_sprite(self.message)
+        self.manager.draw()
 
 class BetweenDayView(arcade.View):
     def __init__(self, money_quota, balance, day):

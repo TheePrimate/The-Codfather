@@ -5,7 +5,7 @@ Instructions:
     2. Install python packages: arcade 3.2.0 and numpy 2.3.0rc1
     3. Open assets\font.ttf in "Explorer"
     4. Click on the icon
-    5. Install the font
+    5. Install the font from https://www.dafont.com/pixeled.font.
     6. Run "game.py"
     7. Have fun
 
