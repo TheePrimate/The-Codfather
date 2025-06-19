@@ -190,7 +190,7 @@ class GameView(arcade.View):
         self.balance_text = None
         # Clock properties
         self.game_time_minutes = 6 * 60  # Starts at 6 am (60 minutes * 6)
-        self.clock_speed = 12 # 1 real second = 12 in-game minute = 2 real time minute day
+        self.clock_speed = 100 # 1 real second = 12 in-game minute = 2 real time minute day
         self.clock_text = arcade.Text('', x=1100, y=700, font_name='Pixeled')
         # How much money we have
         self.money = 0
@@ -260,7 +260,7 @@ class GameView(arcade.View):
         self.fish_done = False
     
     def init_mine(self):
-        """Initialises variables for the landmine disarming mini game whenever it is called"""
+        """Initialises variables for the landmine disarming minigame whenever it is called"""
         # Calculates realistic explosion chances, Amatol, the explosive used is volatile
         self.spont_combst_chance = random.randint(0, 101)
         # If water leaks into the mine it becomes less volatile
@@ -416,8 +416,7 @@ class GameView(arcade.View):
         display_hours = hours % 12 or 12
         self.clock_text.text = f"Time: {display_hours:02}:{minutes:02} {am_pm}"
         # Switches view to the BetweenDayView() when time reaches 24:00 or 12am.(start of a new day).
-        if hours == 0 and not self.is_fishing and not self.minigame_activate:
-            self.new_day()
+        if hours == 0:
             self.window.show_view(BetweenDayView(self.money_quota, self.balance, self.day))
         # If you miss a fish, this will allow a label to be drawn for only 1 second
         if self.show_missed_label:
@@ -863,6 +862,8 @@ class BetweenDayView(arcade.View):
             if self.count == self.money_quota:
                 self.continue_day = True
         # If quota is not completed, count up the balance
+        elif self.balance == 0:
+            self.failed = True
         elif self.count < self.balance < self.money_quota:
             self.count += 1
             if self.count == self.balance:
