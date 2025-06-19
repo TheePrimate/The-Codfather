@@ -260,7 +260,7 @@ class GameView(arcade.View):
         self.fish_done = False
     
     def init_mine(self):
-        """Initialises variables for the landmine disarming mini game whenever it is called"""
+        """Initialises variables for the landmine disarming minigame whenever it is called"""
         # Calculates realistic explosion chances, Amatol, the explosive used is volatile
         self.spont_combst_chance = random.randint(0, 101)
         # If water leaks into the mine it becomes less volatile
@@ -343,7 +343,8 @@ class GameView(arcade.View):
             self.jeep_list.draw(pixelated=True)
 
     def choose_new_fish(self):
-        current_fish = "Naval Bomb"
+        current_fish = random.choices(FISH_LIST, weights=[0.20, 0.20, 0.15, 0.15, 0.05, 0.05,
+                                                          0.025, 0.025, 0.02, 0.02, 0.11], k=1)[0]
         self.current_minigame = fish_data[current_fish][0]
         self.current_value = fish_data[current_fish][1]
         self.current_difficulty_low = fish_data[current_fish][2]
@@ -416,8 +417,7 @@ class GameView(arcade.View):
         display_hours = hours % 12 or 12
         self.clock_text.text = f"Time: {display_hours:02}:{minutes:02} {am_pm}"
         # Switches view to the BetweenDayView() when time reaches 24:00 or 12am.(start of a new day).
-        if hours == 0 and not self.is_fishing and not self.minigame_activate:
-            self.new_day()
+        if hours == 0:
             self.window.show_view(BetweenDayView(self.money_quota, self.balance, self.day))
         # If you miss a fish, this will allow a label to be drawn for only 1 second
         if self.show_missed_label:
@@ -506,6 +506,9 @@ class GameView(arcade.View):
         # If the B&M team is there, update the animation
         if self.jeep_flag:
             self.jeep_list.update_animation()
+
+        if self.death:
+            self.window.show_view(DeathScreen())
 
         # Fishing Minigame
         if self.minigame_activate is True:
@@ -643,9 +646,6 @@ class GameView(arcade.View):
                     if self.jeep_tertiary_flag == 2:
                         if len(self.defusal_list) > 0:
                             self.defusal_list.pop()
-
-            if self.death:
-                self.window.show_view(DeathScreen())
 
     # Function specifically for registering clicks from the button. Once the button is clicked, this function will run.
     def button_clicked(self, event):
@@ -863,6 +863,8 @@ class BetweenDayView(arcade.View):
             if self.count == self.money_quota:
                 self.continue_day = True
         # If quota is not completed, count up the balance
+        elif self.balance == 0:
+            self.failed = True
         elif self.count < self.balance < self.money_quota:
             self.count += 1
             if self.count == self.balance:
